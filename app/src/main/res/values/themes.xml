@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Rabiya" parent="android:Theme.Material.NoActionBar">
+        <!-- Custom attributes or status bar styling can be added here if desired -->
+    </style>
+</resources>

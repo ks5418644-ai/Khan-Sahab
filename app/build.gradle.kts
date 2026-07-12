@@ -1,0 +1,133 @@
+import java.io.File
+
+// Synchronously write .env from system environment variables during Gradle config
+val envFile = rootProject.file(".env")
+val keysToImport = listOf("GEMINI_API_KEY", "OPENROUTER_API_KEY", "CHATGPT_API_KEY", "DEEPSEEK_API_KEY", "NOV_API_KEY", "POE_API_KEY")
+val envMap = mutableMapOf<String, String>()
+
+if (envFile.exists()) {
+    envFile.forEachLine { line ->
+        if (line.isNotBlank() && !line.startsWith("#")) {
+            val parts = line.split("=", limit = 2)
+            if (parts.size == 2) {
+                envMap[parts[0].trim()] = parts[1].trim()
+            }
+        }
+    }
+}
+
+var envChanged = false
+for (key in keysToImport) {
+    val systemValue = System.getenv(key) ?: System.getenv(key.lowercase()) ?: ""
+    if (systemValue.isNotBlank() && !systemValue.contains("your_") && !systemValue.contains("placeholder")) {
+        if (envMap[key] != systemValue) {
+            envMap[key] = systemValue
+            envChanged = true
+        }
+    }
+}
+
+if (envChanged || !envFile.exists()) {
+    val sb = StringBuilder()
+    sb.append("# Generated automatically from system environment variables during Gradle sync\n")
+    for ((key, value) in envMap) {
+        sb.append("$key=$value\n")
+    }
+    for (key in keysToImport) {
+        if (!envMap.containsKey(key)) {
+            sb.append("$key=your_${key.lowercase()}_here\n")
+        }
+    }
+    envFile.writeText(sb.toString())
+}
+
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.secrets)
+}
+
+android {
+    namespace = "com.example"
+    compileSdk = 34
+
+    defaultConfig {
+        applicationId = "com.aistudio.rabiyasaheli.v2.umqkzx"
+        minSdk = 26
+        targetSdk = 34
+        versionCode = 2
+        versionName = "2.0"
+
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        vectorDrawables {
+            useSupportLibrary = true
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            signingConfig = signingConfigs.getByName("debug")
+        }
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
+}
+
+dependencies {
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
+    implementation(libs.androidx.activity.compose)
+    
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.compose.ui)
+    implementation(libs.androidx.compose.ui.graphics)
+    implementation(libs.androidx.compose.ui.tooling.preview)
+    implementation(libs.androidx.compose.material3)
+    implementation("androidx.compose.material:material-icons-extended")
+    
+    implementation(libs.androidx.navigation.compose)
+
+    // Room
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+
+    // Retrofit & OkHttp
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.serialization)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.coil.compose)
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.play.services.ads)
+}
+
+secrets {
+    propertiesFileName = ".env"
+    defaultPropertiesFileName = ".env.example"
+}

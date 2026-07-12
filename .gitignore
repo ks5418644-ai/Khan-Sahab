@@ -1,0 +1,39 @@
+# Gradle files and caches
+.gradle/
+build/
+/*/build/
+app/build/
+
+# Build outputs and artifacts
+.build-outputs/
+*.apk
+*.aar
+*.ap_
+*.aab
+
+# Local configuration and environment secrets
+local.properties
+.env
+.env.local
+.env.*
+! .env.example
+
+# Signatures and Keystores (highly sensitive)
+*.keystore
+*.jks
+debug.keystore.base64
+
+# Log files and crash reports
+*.log
+
+# Android Studio / IntelliJ IDEA files
+.idea/
+*.iml
+.navigation/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# OS generated files
+.DS_Store
+Thumbs.db
