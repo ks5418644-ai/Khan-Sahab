@@ -7,6 +7,7 @@ app/build/
 # Build outputs and artifacts
 .build-outputs/
 *.apk
+!app-debug.apk
 *.aar
 *.ap_
 *.aab
