@@ -745,9 +745,9 @@ fun MainDrawerLayout(viewModel: MainViewModel) {
             .navigationBarsPadding(),
         topBar = {
             Column {
-                AdMobBanner()
                 if (currentTab != 0 && currentTab != 3) {
                     RabiyaUnifiedTopBar(viewModel)
+                    AdMobBanner()
                 }
             }
         },
@@ -1175,6 +1175,11 @@ fun HomeScreen(viewModel: MainViewModel) {
                     }
                 }
             }
+        }
+
+        // 🛡️ Sponsored Admob Banner under header
+        item {
+            AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
         }
 
         // 2. Beautiful Personal Greeting & Translucent Futurist Core Design Container
@@ -8294,6 +8299,9 @@ fun QuickImageGeneratorDialog(
 
                 Divider(color = GridSpace, thickness = 1.dp)
 
+                // 🛡️ Sponsored Admob Banner under image studio header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
+
                 // Split visually: Top half keeps the dynamic Preview pane fixed
                 Box(
                     modifier = Modifier
@@ -9406,6 +9414,9 @@ fun ImageToVideoCreatorDialog(
                 }
                 
                 Divider(color = GridSpace, thickness = 1.2.dp)
+
+                // 🛡️ Sponsored Admob Banner under cineface studio header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
                 
                 // MAIN STEP 1: LOAD THE FACE BACKGROUND PORTRAIT
                 Box(
@@ -10558,6 +10569,9 @@ fun AutoCaptionSubtitleDialog(
                         Icon(Icons.Default.Close, contentDescription = "Dismiss", tint = Color.LightGray)
                     }
                 }
+                
+                // 🛡️ Sponsored Admob Banner under caption header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
                 
                 // Video details picker
                 Box(
@@ -14405,6 +14419,9 @@ fun ToolsScreen(viewModel: MainViewModel) {
                 }
             }
         }
+
+        // 🛡️ Sponsored Admob Banner under tools header
+        AdMobBanner(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
 
         // 2. HORIZONTAL SCROLL PILLS FOR TAB CATEGORY FILTER
         Row(
@@ -19100,6 +19117,9 @@ fun UniversalToolDialog(
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(tool.sub, color = TextMuted, fontSize = 11.sp, textAlign = TextAlign.Center)
 
+                // 🛡️ Sponsored Admob Banner under tool header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
+
                 Spacer(modifier = Modifier.height(10.dp))
 
                 // Sleek Material 3 sliding tab selector
@@ -20963,6 +20983,9 @@ fun AutoImageStoryGeneratorDialog(
 
                 Divider(color = GridSpace, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
 
+                // 🛡️ Sponsored Admob Banner under story sequence header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
+
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -21598,6 +21621,9 @@ fun VoiceCloningStudioDialog(
                 }
                 
                 Divider(color = GridSpace, thickness = 1.dp, modifier = Modifier.padding(vertical = 10.dp))
+                
+                // 🛡️ Sponsored Admob Banner under voice studio header
+                AdMobBanner(modifier = Modifier.padding(bottom = 8.dp))
                 
                 // Content Wrapper (Scrollable Layout)
                 Column(
@@ -25270,6 +25296,9 @@ int main() {
                     }
                 }
 
+                // 🛡️ Sponsored Admob Banner under code sandbox header
+                AdMobBanner(modifier = Modifier.padding(vertical = 4.dp))
+
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Language Select Row
@@ -27023,7 +27052,7 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                     com.google.android.gms.ads.AdView(context).apply {
                         setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                         // Real AdMob Banner Ad Unit ID
-                        adUnitId = "ca-app-pub-9219846238670981/9361012513"
+                        adUnitId = "ca-app-pub-9219846238670981/1178058710"
                         loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                     }
                 }
