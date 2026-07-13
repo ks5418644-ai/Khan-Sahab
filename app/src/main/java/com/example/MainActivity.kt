@@ -27023,7 +27023,7 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                     com.google.android.gms.ads.AdView(context).apply {
                         setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                         // Real AdMob Banner Ad Unit ID
-                        adUnitId = "ca-app-pub-9219846238670981/1998327541"
+                        adUnitId = "ca-app-pub-9219846238670981/9361012513"
                         loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                     }
                 }
