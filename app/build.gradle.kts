@@ -2,7 +2,7 @@ import java.io.File
 
 // Synchronously write .env from system environment variables during Gradle config
 val envFile = rootProject.file(".env")
-val keysToImport = listOf("GEMINI_API_KEY", "OPENROUTER_API_KEY", "CHATGPT_API_KEY", "DEEPSEEK_API_KEY", "NOV_API_KEY", "POE_API_KEY")
+val keysToImport = listOf("GEMINI_API_KEY", "CHATGPT_API_KEY", "CLAUDE_API_KEY")
 val envMap = mutableMapOf<String, String>()
 
 if (envFile.exists()) {
@@ -57,8 +57,8 @@ android {
         applicationId = "com.aistudio.rabiyasaheli.v2.umqkzx"
         minSdk = 26
         targetSdk = 34
-        versionCode = 2
-        versionName = "2.0"
+        versionCode = 4
+        versionName = "4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -77,11 +77,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_18
+        targetCompatibility = JavaVersion.VERSION_18
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "18"
     }
     buildFeatures {
         compose = true

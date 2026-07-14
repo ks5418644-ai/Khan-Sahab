@@ -10,10 +10,6 @@ object AppConfig {
     }
 
     val GEMINI_API_KEY: String = getValidKey(BuildConfig.GEMINI_API_KEY)
-    val OPENROUTER_API_KEY: String = getValidKey(BuildConfig.OPENROUTER_API_KEY)
     val CHATGPT_API_KEY: String = getValidKey(BuildConfig.CHATGPT_API_KEY)
-    val DEEPSEEK_API_KEY: String = getValidKey(BuildConfig.DEEPSEEK_API_KEY)
-    val NOV_API_KEY: String = getValidKey(BuildConfig.NOV_API_KEY)
-    val POE_API_KEY: String = getValidKey(BuildConfig.POE_API_KEY)
     val CLAUDE_API_KEY: String = getValidKey(BuildConfig.CLAUDE_API_KEY)
 }

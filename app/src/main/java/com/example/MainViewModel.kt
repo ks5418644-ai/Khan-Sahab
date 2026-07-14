@@ -117,6 +117,16 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var latestContext: Context? = null
 
     init {
+        // 🚀 Auto-optimization background thread to keep resources clean and prevent any lag
+        viewModelScope.launch(Dispatchers.Default) {
+            while (true) {
+                kotlinx.coroutines.delay(45000) // Every 45 seconds
+                if (_isTurboMode.value) {
+                    optimizeRamMemory()
+                }
+            }
+        }
+
         try {
             textToSpeech = TextToSpeech(application) { status ->
                 if (status == TextToSpeech.SUCCESS) {
@@ -302,11 +312,12 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // --- KEY CONFIGURATIONS (With safe BuildConfig / Fallback defaults) ---
     val geminiKey = AppConfig.GEMINI_API_KEY
-    val openRouterKey = AppConfig.OPENROUTER_API_KEY
+    val openRouterKey = ""
     val chatGptKey = AppConfig.CHATGPT_API_KEY
-    val deepSeekKey = AppConfig.DEEPSEEK_API_KEY
-    val novKey = AppConfig.NOV_API_KEY
-    val poeKey = AppConfig.POE_API_KEY
+    val claudeKey = AppConfig.CLAUDE_API_KEY
+    val deepSeekKey = ""
+    val novKey = ""
+    val poeKey = ""
     var lastErrorMessage = ""
 
     // --- VOICE VOCALIZER STATES & ASSISTANT FRAMEWORK ---
@@ -1244,7 +1255,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         userPrompt: String,
         history: List<ChatMessageEntity>
     ): String? = kotlinx.coroutines.withContext(Dispatchers.IO) {
-        val apiKey = AppConfig.CLAUDE_API_KEY
+        val apiKey = claudeKey
         if (apiKey.isBlank() || apiKey == "claude_placeholder") {
             Log.e("MainViewModel", "Anthropic Claude API Key is missing or invalid.")
             return@withContext null
@@ -1526,7 +1537,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     }
                     
                     // 1. Try Direct Anthropic API call with CLAUDE_API_KEY
-                    val directKey = AppConfig.CLAUDE_API_KEY
+                    val directKey = claudeKey
                     if (directKey.isNotBlank() && directKey != "claude_placeholder") {
                         try {
                             Log.d("MainViewModel", "Routing to Direct Anthropic Claude API...")

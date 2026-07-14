@@ -931,10 +931,7 @@ fun RabiyaUnifiedTopBar(viewModel: MainViewModel) {
                                     "Rabiya Core-v3 (Gemini 3.5 Flash)" to "Official Google AI Studio Endpoint Sweet Companion",
                                     "Rabiya Ultra-Pro-v3 (Gemini 3.1 Pro)" to "Advanced Reasoning & Cognitive Pro Intelligence (Advance Brain)",
                                     "GPT-4o Deep Intelligence" to "Direct OpenAI high-reasoning flow",
-                                    "Claude 3.5 Sonnet (Direct Cloud)" to "Directly powered by sk-ant Anthropic Cloud Engine",
-                                    "Claude-3.5-Sonnet Custom" to "Ultimate code architect & analytical document parsing",
-                                    "DeepSeek-R1 (Thinking Engine)" to "Step-by-step cognitive reasoning & deep planning",
-                                    "Llama-3-70B Extreme Agent" to "High-speed agentic open-source neural processor"
+                                    "Claude 3.5 Sonnet (Direct Cloud)" to "Directly powered by sk-ant Anthropic Cloud Engine"
                                 ).forEach { (name, label) ->
                                     Row(
                                         modifier = Modifier
@@ -1954,7 +1951,7 @@ fun EBookLibraryWidget(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                items(curatedFreeBooks) { book ->
+                items(curatedFreeBooks, key = { it.title }) { book ->
                     Column(
                         modifier = Modifier
                             .width(110.dp)
@@ -2500,7 +2497,7 @@ fun YouTubeInteractiveWidget(viewModel: MainViewModel) {
                             .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        items(youtubeVideos) { v ->
+                        items(youtubeVideos, key = { it.id }) { v ->
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -2774,7 +2771,7 @@ fun YouTubeInteractiveWidget(viewModel: MainViewModel) {
                         .weight(1f),
                     verticalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    items(youtubeVideos) { v ->
+                    items(youtubeVideos, key = { it.id }) { v ->
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -2812,7 +2809,7 @@ fun YouTubeInteractiveWidget(viewModel: MainViewModel) {
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                 ) {
-                    items(youtubeVideos) { v ->
+                    items(youtubeVideos, key = { it.id }) { v ->
                         Row(
                             modifier = Modifier
                                 .width(135.dp)
@@ -7251,10 +7248,7 @@ fun ChatMainContent(
                         "Rabiya Core-v3 (Gemini 3.5 Flash)" to "Official Google AI Studio Endpoint Sweet Companion",
                         "Rabiya Ultra-Pro-v3 (Gemini 3.1 Pro)" to "Advanced Reasoning & Cognitive Pro Intelligence (Advance Brain)",
                         "GPT-4o Deep Intelligence" to "Direct OpenAI high-reasoning flow",
-                        "Claude 3.5 Sonnet (Direct Cloud)" to "Directly powered by sk-ant Anthropic Cloud Engine",
-                        "Claude-3.5-Sonnet Custom" to "Ultimate code architect & analytical document parsing",
-                        "DeepSeek-R1 (Thinking Engine)" to "Step-by-step cognitive reasoning & deep planning",
-                        "Llama-3-70B Extreme Agent" to "High-speed agentic open-source neural processor"
+                        "Claude 3.5 Sonnet (Direct Cloud)" to "Directly powered by sk-ant Anthropic Cloud Engine"
                     ).forEach { (name, label) ->
                         Row(
                             modifier = Modifier
@@ -8575,7 +8569,7 @@ fun QuickImageGeneratorDialog(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    items(enginesList) { engine ->
+                                    items(enginesList, key = { it }) { engine ->
                                         val isSel = (selectedImageEngine == engine)
                                         Box(
                                             modifier = Modifier
@@ -8621,7 +8615,7 @@ fun QuickImageGeneratorDialog(
                                 Text("CHOOSE ARTISTIC STYLE SYSTEM:", color = CyberPink, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                 val stylesList = listOf("Realistic", "Anime", "3D Render", "Cartoon", "Cinematic", "Synthwave", "Watercolor")
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    items(stylesList) { style ->
+                                    items(stylesList, key = { it }) { style ->
                                         val isSel = (selectedStyle == style)
                                         Box(
                                             modifier = Modifier
@@ -8656,7 +8650,7 @@ fun QuickImageGeneratorDialog(
                                     "Corporate Executive"
                                 )
                                 LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                    items(charactersList) { character ->
+                                    items(charactersList, key = { it }) { character ->
                                         val isSel = (selectedCharacter == character)
                                         Box(
                                             modifier = Modifier
@@ -9103,7 +9097,7 @@ fun QuickImageGeneratorDialog(
                                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        items(localImagesList) { file ->
+                                        items(localImagesList, key = { it.absolutePath }) { file ->
                                             Box(
                                                 modifier = Modifier
                                                     .aspectRatio(1f)
@@ -9447,7 +9441,7 @@ fun ImageToVideoCreatorDialog(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
                             ) {
-                                items(localImages) { img ->
+                                items(localImages, key = { it.absolutePath }) { img ->
                                     val isSel = selectedImageFile?.absolutePath == img.absolutePath
                                     Box(
                                         modifier = Modifier
@@ -12609,7 +12603,7 @@ fun VoiceScreen(viewModel: MainViewModel) {
                                 } else {
                                     Text("SELECT HISTORIC TARGET WAV FILE:", color = TextLight, fontSize = 8.5.sp, fontWeight = FontWeight.Bold)
                                     LazyRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        items(savedImagesAndVoices) { f ->
+                                        items(savedImagesAndVoices, key = { f -> f.absolutePath }) { f ->
                                             val isSel = targetTrimFile?.name == f.name
                                             Box(
                                                 modifier = Modifier
@@ -13570,7 +13564,7 @@ fun FileManagerScreen(viewModel: MainViewModel) {
                     }
                 }
             } else {
-                items(filteredList) { roboFile ->
+                items(filteredList, key = { it.absolutePath }) { roboFile ->
                     FileRowItem(
                         file = roboFile, 
                         onOpen = { fileToView = roboFile },
@@ -16272,7 +16266,7 @@ fun MemoryBoxNotesSubTab(viewModel: MainViewModel) {
                 }
             }
         } else {
-            items(items) { item ->
+            items(items, key = { it.id }) { item ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -17420,11 +17414,8 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
                     Text("API CREDENTIALS SYSTEM DECODER", color = CyberCyan, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     
                     ApiCredentialRow("Google Gemini Key", viewModel.geminiKey.isNotBlank() && viewModel.geminiKey != "ai_key_placeholder")
-                    ApiCredentialRow("OpenRouter Active Key", viewModel.openRouterKey.isNotBlank())
                     ApiCredentialRow("ChatGPT Instance Key", viewModel.chatGptKey.isNotBlank() && viewModel.chatGptKey != "chatgpt_placeholder")
-                    ApiCredentialRow("DeepSeek Private Key", viewModel.deepSeekKey.isNotBlank() && viewModel.deepSeekKey != "deepseek_placeholder")
-                    ApiCredentialRow("Nov Framework Key", viewModel.novKey.isNotBlank() && viewModel.novKey != "nov_placeholder")
-                    ApiCredentialRow("Poe.ai Neural Key", viewModel.poeKey.isNotBlank() && viewModel.poeKey != "poe_placeholder")
+                    ApiCredentialRow("Anthropic Claude Key", viewModel.claudeKey.isNotBlank() && viewModel.claudeKey != "claude_placeholder")
                 }
             }
         }
@@ -19192,10 +19183,7 @@ fun UniversalToolDialog(
                             val models = listOf(
                                 "Rabiya Core-v2 (Gemini-Flash)",
                                 "ChatGPT Pro (OpenAI)",
-                                "Llama-3 (OpenRouter)",
-                                "DeepSeek Pro",
                                 "Claude Sonnet",
-                                "CodeRabbit (AI Code)",
                                 "GPT-4o Vision (Image)"
                             )
                             models.forEach { modelName ->
@@ -19379,8 +19367,7 @@ fun UniversalToolDialog(
                             val docEngines = listOf(
                                 "Claude 3.5 Sonnet (Direct Cloud)",
                                 "Rabiya Core-v3 (Gemini 3.5 Flash)",
-                                "ChatGPT Pro (OpenAI)",
-                                "DeepSeek-R1 (Thinking Engine)"
+                                "ChatGPT Pro (OpenAI)"
                             )
                             docEngines.forEach { engineName ->
                                 val isSelected = (runningModel == engineName)
@@ -19625,9 +19612,6 @@ fun UniversalToolDialog(
                                     "Rabiya Core-v2 (Gemini-Flash)",
                                     "ChatGPT Pro (OpenAI)",
                                     "Claude Sonnet",
-                                    "DeepSeek Pro",
-                                    "Llama-3 (OpenRouter)",
-                                    "CodeRabbit (AI Code)",
                                     "GPT-4o Vision (Image)"
                                 )
                                 modelsList.forEach { modelName ->
@@ -21045,7 +21029,7 @@ fun AutoImageStoryGeneratorDialog(
                                 Column(modifier = Modifier.weight(1.2f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text("ARTISTIC PRESET:", color = CyberPink, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                                     LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        items(stylePresets.size) { index ->
+                                        items(stylePresets.size, key = { stylePresets[it] }) { index ->
                                             val style = stylePresets[index]
                                             val isSel = selectedStyle == style
                                             Box(
@@ -21131,7 +21115,7 @@ fun AutoImageStoryGeneratorDialog(
                             )
                         }
 
-                        items(scenesList.size) { index ->
+                        items(scenesList.size, key = { scenesList[it].id }) { index ->
                             val s = scenesList[index]
                             val isGenIdx = currentProcessingIndex == index
                             
@@ -22054,7 +22038,7 @@ fun VoiceCloningStudioDialog(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    items(premiumProfiles.size) { index ->
+                                    items(premiumProfiles.size, key = { premiumProfiles[it].id }) { index ->
                                         val profile = premiumProfiles[index]
                                         val isSelected = selectedProfileId == profile.id
                                         
@@ -22196,7 +22180,7 @@ fun VoiceCloningStudioDialog(
                                 horizontalArrangement = Arrangement.spacedBy(6.dp),
                                 modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp)
                             ) {
-                                items(tonePresets.size) { index ->
+                                items(tonePresets.size, key = { tonePresets[it].first }) { index ->
                                     val preset = tonePresets[index]
                                     val isSelected = selectedTonePreset == preset.first
                                     Box(
@@ -23841,7 +23825,7 @@ fun GoogleToolsHubView(viewModel: MainViewModel) {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
-                items(tabs.size) { index ->
+                items(tabs.size, key = { tabs[it] }) { index ->
                     val tabName = tabs[index]
                     val isSel = currentHubTab == tabName
                     Box(
@@ -23875,7 +23859,7 @@ fun GoogleToolsHubView(viewModel: MainViewModel) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(filteredApps.size) { index ->
+                items(filteredApps.size, key = { filteredApps[it].first }) { index ->
                     val app = filteredApps[index]
                     
                     val brandColor = when (app.first) {
@@ -24254,7 +24238,7 @@ fun GoogleKeepSim() {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(notes.size) { index ->
+            items(notes.size, key = { notes[it].first + "_" + notes[it].second + "_" + it }) { index ->
                 val note = notes[index]
                 Box(
                     modifier = Modifier
@@ -24397,7 +24381,7 @@ fun YouTubeSim() {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(mockVideos.size) { idx ->
+            items(mockVideos.size, key = { mockVideos[it].first }) { idx ->
                 val vid = mockVideos[idx]
                 Row(
                     modifier = Modifier
@@ -24482,7 +24466,7 @@ fun GoogleCalendarSim() {
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            items(meetings.size) { idx ->
+            items(meetings.size, key = { meetings[it] + "_" + it }) { idx ->
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -25509,7 +25493,7 @@ int main() {
                                         modifier = Modifier.weight(1f).fillMaxWidth(),
                                         verticalArrangement = Arrangement.spacedBy(8.dp)
                                     ) {
-                                        items(roboFiles) { file ->
+                                        items(roboFiles, key = { it.absolutePath }) { file ->
                                             Box(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
