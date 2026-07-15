@@ -1,5 +1,20 @@
 import java.io.File
 
+// Auto-recreate .env.example if deleted to prevent Secrets plugin crash
+val envExampleFile = rootProject.file(".env.example")
+if (!envExampleFile.exists()) {
+    envExampleFile.writeText("""
+        # SYSTEM REQUIRED FILE - DO NOT DELETE
+        # This is a system-required placeholder file for the Android Gradle build process.
+        # IT DOES NOT CONTAIN ANY SENSITIVE DATA OR REAL API KEYS.
+        # Deleting this file will break the compiler and prevent the app from building.
+
+        GEMINI_API_KEY=placeholder_do_not_delete
+        CHATGPT_API_KEY=placeholder_do_not_delete
+        CLAUDE_API_KEY=placeholder_do_not_delete
+    """.trimIndent() + "\n")
+}
+
 // Synchronously write .env from system environment variables during Gradle config
 val envFile = rootProject.file(".env")
 val keysToImport = listOf("GEMINI_API_KEY", "CHATGPT_API_KEY", "CLAUDE_API_KEY")

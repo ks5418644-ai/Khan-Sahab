@@ -12894,6 +12894,7 @@ fun FileManagerScreen(viewModel: MainViewModel) {
     var fileToView by remember { mutableStateOf<com.example.RoboFile?>(null) }
     var showCreateFolderDialog by remember { mutableStateOf(false) }
     var newFolderName by remember { mutableStateOf("") }
+    var areUrlsVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.refreshRoboFiles(context)
@@ -13132,27 +13133,107 @@ fun FileManagerScreen(viewModel: MainViewModel) {
                                     .fillMaxWidth()
                                     .background(GridSpace, RoundedCornerShape(10.dp))
                                     .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(6.dp)
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
                             ) {
-                                Text("🔥 DESK CONNECTED & LIVE", color = SuccessGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text("🔥 DESK CONNECTED & LIVE", color = SuccessGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                    
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        modifier = Modifier
+                                            .background(SuccessGreen.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
+                                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Security,
+                                            contentDescription = "Secured",
+                                            tint = SuccessGreen,
+                                            modifier = Modifier.size(10.dp)
+                                        )
+                                        Text("SECURE", color = SuccessGreen, fontSize = 8.sp, fontWeight = FontWeight.Bold)
+                                    }
+                                }
+
                                 Text("Open either URL on your Laptop / Computer browser:", color = TextLight, fontSize = 9.sp)
                                 
                                 serverUrls.forEach { url ->
-                                    Text(
-                                        text = url,
-                                        color = CyberCyan,
-                                        fontSize = 11.sp,
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
-                                        modifier = Modifier.clickable {
-                                            val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
-                                            val clip = android.content.ClipData.newPlainText("Rabiya URL", url)
-                                            clipboard.setPrimaryClip(clip)
-                                            android.widget.Toast.makeText(context, "URL Copied!", android.widget.Toast.LENGTH_SHORT).show()
+                                    val displayedText = if (url.startsWith("http://")) {
+                                        val partAfterHttp = url.substring(7)
+                                        val colonIdx = partAfterHttp.indexOf(':')
+                                        if (colonIdx != -1) {
+                                            "http://***.***.***.***" + partAfterHttp.substring(colonIdx)
+                                        } else {
+                                            "http://***.***.***.***:8088"
                                         }
-                                    )
+                                    } else {
+                                        "http://***.***.***.***:8088"
+                                    }
+                                    
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .background(CardSpace.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
+                                            .border(0.5.dp, GridSpace, RoundedCornerShape(6.dp))
+                                            .clickable {
+                                                android.widget.Toast.makeText(context, "Privacy Mode Active: IP Address hidden and secured.", android.widget.Toast.LENGTH_SHORT).show()
+                                            }
+                                            .padding(horizontal = 8.dp, vertical = 6.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = displayedText,
+                                            color = TextMuted,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.ExtraBold,
+                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Lock,
+                                            contentDescription = "Secure",
+                                            tint = TextMuted,
+                                            modifier = Modifier.size(12.dp)
+                                        )
+                                    }
                                 }
-                                Text("💡 Click any URL to copy it to clipboard.", color = TextMuted, fontSize = 8.sp)
+                                Text("🔒 Device IP address details are fully locked and hidden for your privacy.", color = TextMuted, fontSize = 8.sp)
+                                
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(Color(0xFF131A2D), RoundedCornerShape(8.dp))
+                                        .border(0.5.dp, CyberCyan.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
+                                        .padding(8.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Icon(
+                                                imageVector = Icons.Default.Security,
+                                                contentDescription = "Security Status",
+                                                tint = SuccessGreen,
+                                                modifier = Modifier.size(12.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                            Text(
+                                                "100% PRIVATE & SECURE LOCAL DESK",
+                                                color = SuccessGreen,
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold
+                                            )
+                                        }
+                                        Text(
+                                            text = "Yeh IP addresses aapke ghar ke local Wi-Fi router ya USB connection ke hain. Yeh global internet par publish nahi hote aur na hi koi outsider/hacker ise use kar sakta hai. Screen sharing ya screenshots ki protection ke liye, humne isko default hidden rakha hai.",
+                                            color = TextMuted,
+                                            fontSize = 8.sp,
+                                            lineHeight = 11.sp
+                                        )
+                                    }
+                                }
                             }
                         } else {
                             Row(
@@ -17043,34 +17124,7 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
                             .background(GridSpace)
                     )
 
-                    // Switches & Actions
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = "🛡️ PREMIUM AD BLOCKER",
-                                color = Color.White,
-                                fontSize = 10.5.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "No banner, card, or interstitial ads will display",
-                                color = TextMuted,
-                                fontSize = 8.5.sp
-                            )
-                        }
-                        Switch(
-                            checked = isAdBlockerActive,
-                            onCheckedChange = { viewModel.toggleAdBlocker() },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = CyberPink,
-                                checkedTrackColor = CyberPink.copy(alpha = 0.3f)
-                            )
-                        )
-                    }
+
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -26914,7 +26968,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("Support Email:", color = TextMuted, fontSize = 9.sp)
-                                        Text("ks5418644@gmail.com", color = CyberCyan, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                        Text("support@rabiya-sufi-ai.web.app", color = CyberCyan, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("App Version:", color = TextMuted, fontSize = 9.sp)
@@ -26930,7 +26984,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                             Button(
                                 onClick = {
                                     val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
-                                        data = android.net.Uri.parse("mailto:ks5418644@gmail.com")
+                                        data = android.net.Uri.parse("mailto:support@rabiya-sufi-ai.web.app")
                                         putExtra(android.content.Intent.EXTRA_SUBJECT, "Rabiya Sufi AI Compliance & Publisher Request")
                                     }
                                     try {
@@ -27036,7 +27090,7 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                     com.google.android.gms.ads.AdView(context).apply {
                         setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                         // Real AdMob Banner Ad Unit ID
-                        adUnitId = "ca-app-pub-9219846238670981/1178058710"
+                        adUnitId = "ca-app-pub-9219846238670981/6015737837"
                         loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                     }
                 }

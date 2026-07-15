@@ -425,19 +425,24 @@ class RabiyaHttpServer(
 
         if (decodedPath.isNotBlank()) {
             val file = File(decodedPath)
-            if (file.exists() && file.isFile) {
-                try {
-                    val bytes = file.readBytes()
-                    out.write("HTTP/1.1 200 OK\r\n".toByteArray())
-                    out.write("Content-Type: application/octet-stream\r\n".toByteArray())
-                    out.write("Content-Disposition: attachment; filename=\"${file.name}\"\r\n".toByteArray())
-                    out.write("Content-Length: ${bytes.size}\r\n".toByteArray())
-                    out.write("\r\n".toByteArray())
-                    out.write(bytes)
-                    return
-                } catch (e: Exception) {
-                    Log.e("RabiyaHttpServer", "Error sending download bytes", e)
+            val rootDir = File(context.filesDir, "FileManager")
+            try {
+                if (file.canonicalPath.startsWith(rootDir.canonicalPath)) {
+                    if (file.exists() && file.isFile) {
+                        val bytes = file.readBytes()
+                        out.write("HTTP/1.1 200 OK\r\n".toByteArray())
+                        out.write("Content-Type: application/octet-stream\r\n".toByteArray())
+                        out.write("Content-Disposition: attachment; filename=\"${file.name}\"\r\n".toByteArray())
+                        out.write("Content-Length: ${bytes.size}\r\n".toByteArray())
+                        out.write("\r\n".toByteArray())
+                        out.write(bytes)
+                        return
+                    }
+                } else {
+                    Log.e("RabiyaHttpServer", "Blocked unauthorized file download attempt: $decodedPath")
                 }
+            } catch (e: Exception) {
+                Log.e("RabiyaHttpServer", "Error sending download bytes", e)
             }
         }
         serve404(out)
@@ -453,17 +458,22 @@ class RabiyaHttpServer(
 
         if (decodedPath.isNotBlank()) {
             val file = File(decodedPath)
-            if (file.exists() && file.isFile) {
-                file.delete()
-                viewModel.refreshRoboFiles(context)
-                try {
-                    out.write("HTTP/1.1 302 Found\r\n".toByteArray())
-                    out.write("Location: /\r\n".toByteArray())
-                    out.write("\r\n".toByteArray())
-                    return
-                } catch (e: Exception) {
-                    Log.e("RabiyaHttpServer", "Error resolving redirect", e)
+            val rootDir = File(context.filesDir, "FileManager")
+            try {
+                if (file.canonicalPath.startsWith(rootDir.canonicalPath)) {
+                    if (file.exists() && file.isFile) {
+                        file.delete()
+                        viewModel.refreshRoboFiles(context)
+                        out.write("HTTP/1.1 302 Found\r\n".toByteArray())
+                        out.write("Location: /\r\n".toByteArray())
+                        out.write("\r\n".toByteArray())
+                        return
+                    }
+                } else {
+                    Log.e("RabiyaHttpServer", "Blocked unauthorized file delete attempt: $decodedPath")
                 }
+            } catch (e: Exception) {
+                Log.e("RabiyaHttpServer", "Error resolving redirect", e)
             }
         }
         serve404(out)
@@ -491,10 +501,21 @@ class RabiyaHttpServer(
 
             val rootDir = File(context.filesDir, "FileManager")
             val targetFolder = File(rootDir, folder)
+            
+            // Security: block any folder navigation escape sequences
+            if (!targetFolder.canonicalPath.startsWith(rootDir.canonicalPath)) {
+                throw SecurityException("Security: Folder path is outside sandbox: $folder")
+            }
+            
             if (!targetFolder.exists()) {
                 targetFolder.mkdirs()
             }
+            
             val targetFile = File(targetFolder, filename)
+            // Security: block file path bypasses
+            if (!targetFile.canonicalPath.startsWith(targetFolder.canonicalPath)) {
+                throw SecurityException("Security: File path is outside sandbox folder: $filename")
+            }
             
             val outputStream = java.io.FileOutputStream(targetFile)
             val buffer = ByteArray(4096)
