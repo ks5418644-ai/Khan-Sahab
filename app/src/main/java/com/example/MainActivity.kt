@@ -88,6 +88,157 @@ import androidx.compose.ui.text.style.TextOverflow
 class MainActivity : ComponentActivity() {
     companion object {
         var activePermissionCallback: (() -> Unit)? = null
+        var requestInterstitialCallback: (() -> Unit)? = null
+    }
+
+    private var mInterstitialAd: com.google.android.gms.ads.interstitial.InterstitialAd? = null
+    private var mRewardedAd: com.google.android.gms.ads.rewarded.RewardedAd? = null
+    private var isAdMobInitialized = false
+    lateinit var viewModel: MainViewModel
+
+    fun checkPlayServicesAvailable(): Boolean {
+        return try {
+            val availability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
+            val resultCode = availability.isGooglePlayServicesAvailable(this)
+            if (resultCode == com.google.android.gms.common.ConnectionResult.SUCCESS) {
+                Log.d("MainActivity", "✅ Google Play Services is available and ready on this device.")
+                true
+            } else {
+                val isUserResolvable = availability.isUserResolvableError(resultCode)
+                Log.w("MainActivity", "⚠️ Google Play Services is NOT fully available on this device (Result Code: $resultCode, User Resolvable: $isUserResolvable). This is normal on Amazon Fire tablets/devices and some non-GMS custom ROMs. Real AdMob ads might not serve, but the app will fall back gracefully and remain 100% functional.")
+                false
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "❌ Error checking Google Play Services availability, assuming GMS is unavailable on this device.", e)
+            false
+        }
+    }
+
+    fun loadAdMobInterstitial() {
+        if (!isAdMobInitialized) {
+            Log.w("MainActivity", "AdMob is not initialized yet. Skipping Interstitial load.")
+            return
+        }
+        val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
+        Log.d("MainActivity", "⌛ Initiating Interstitial Ad request with ID: ca-app-pub-9219846238670981/7720003060")
+        com.google.android.gms.ads.interstitial.InterstitialAd.load(
+            this,
+            "ca-app-pub-9219846238670981/7720003060",
+            adRequest,
+            object : com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
+                override fun onAdLoaded(interstitialAd: com.google.android.gms.ads.interstitial.InterstitialAd) {
+                    mInterstitialAd = interstitialAd
+                    Log.d("MainActivity", "✅ Interstitial ad loaded successfully! (Unit: ca-app-pub-9219846238670981/7720003060)")
+                    interstitialAd.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                        override fun onAdClicked() {
+                            Log.d("MainActivity", "Interstitial ad clicked.")
+                        }
+                        override fun onAdDismissedFullScreenContent() {
+                            Log.d("MainActivity", "Interstitial ad dismissed.")
+                            mInterstitialAd = null
+                            loadAdMobInterstitial()
+                        }
+                        override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                            Log.e("MainActivity", "❌ Interstitial failed to show. Error code: ${adError.code}, Message: ${adError.message}")
+                            mInterstitialAd = null
+                        }
+                        override fun onAdImpression() {
+                            Log.d("MainActivity", "Interstitial ad impression recorded.")
+                        }
+                        override fun onAdShowedFullScreenContent() {
+                            Log.d("MainActivity", "Interstitial ad displayed successfully.")
+                        }
+                    }
+                }
+
+                override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
+                    Log.e("MainActivity", "❌ Interstitial ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                    mInterstitialAd = null
+                }
+            }
+        )
+    }
+
+    fun loadAdMobRewarded() {
+        if (!isAdMobInitialized) {
+            Log.w("MainActivity", "AdMob is not initialized yet. Skipping Rewarded load.")
+            return
+        }
+        val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
+        Log.d("MainActivity", "⌛ Initiating Rewarded Ad request with ID: ca-app-pub-9219846238670981/7177077585")
+        com.google.android.gms.ads.rewarded.RewardedAd.load(
+            this,
+            "ca-app-pub-9219846238670981/7177077585",
+            adRequest,
+            object : com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
+                override fun onAdLoaded(rewardedAd: com.google.android.gms.ads.rewarded.RewardedAd) {
+                    mRewardedAd = rewardedAd
+                    Log.d("MainActivity", "✅ Rewarded ad loaded successfully! (Unit: ca-app-pub-9219846238670981/7177077585)")
+                    rewardedAd.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
+                        override fun onAdClicked() {
+                            Log.d("MainActivity", "Rewarded ad clicked.")
+                        }
+                        override fun onAdDismissedFullScreenContent() {
+                            Log.d("MainActivity", "Rewarded ad dismissed.")
+                            mRewardedAd = null
+                            loadAdMobRewarded()
+                        }
+                        override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
+                            Log.e("MainActivity", "❌ Rewarded ad failed to show. Error code: ${adError.code}, Message: ${adError.message}")
+                            mRewardedAd = null
+                        }
+                        override fun onAdImpression() {
+                            Log.d("MainActivity", "Rewarded ad impression recorded.")
+                        }
+                        override fun onAdShowedFullScreenContent() {
+                            Log.d("MainActivity", "Rewarded ad displayed successfully.")
+                        }
+                    }
+                }
+
+                override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
+                    Log.e("MainActivity", "❌ Rewarded ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                    mRewardedAd = null
+                }
+            }
+        )
+    }
+
+    fun triggerInterstitialAdFlow(onFallback: () -> Unit) {
+        runOnUiThread {
+            val interstitial = mInterstitialAd
+            if (interstitial != null) {
+                Log.d("MainActivity", "Showing REAL AdMob Interstitial ad...")
+                interstitial.show(this)
+            } else {
+                Log.w("MainActivity", "Real Interstitial ad not loaded yet. Fallback to simulation.")
+                onFallback()
+                loadAdMobInterstitial()
+            }
+        }
+    }
+
+    fun triggerRewardedAdFlow(onRewardEarned: () -> Unit, onFallback: () -> Unit) {
+        runOnUiThread {
+            val rewarded = mRewardedAd
+            if (rewarded != null) {
+                Log.d("MainActivity", "Showing REAL AdMob Rewarded ad...")
+                rewarded.show(this) { rewardItem ->
+                    val amount = rewardItem.amount
+                    val type = rewardItem.type
+                    Log.d("MainActivity", "✅ User earned reward: $amount $type")
+                    runOnUiThread {
+                        viewModel.incrementAdsWatched()
+                        viewModel.toggleProStatus(true)
+                        onRewardEarned()
+                    }
+                }
+            } else {
+                Log.w("MainActivity", "Real Rewarded ad not loaded yet. Fallback to simulation.")
+                onFallback()
+                loadAdMobRewarded()
+            }
+        }
     }
 
     val requestAudioPermissionLauncher = registerForActivityResult(
@@ -240,13 +391,32 @@ class MainActivity : ComponentActivity() {
         }
 
         try {
-            com.google.android.gms.ads.MobileAds.initialize(this) {}
+            val isPlayServicesAvailable = checkPlayServicesAvailable()
+            if (!isPlayServicesAvailable) {
+                Log.w("MainActivity", "⚠️ Initializing MobileAds anyway, but real ads may fail to load on this non-GMS device. Offline/simulated ads are prepared to ensure seamless functionality.")
+            }
+            com.google.android.gms.ads.MobileAds.initialize(this) { status ->
+                isAdMobInitialized = true
+                Log.d("MainActivity", "🚀 AdMob SDK Initialized successfully!")
+                status.adapterStatusMap.forEach { (adapter, adapterStatus) ->
+                    Log.d("MainActivity", "AdMob Adapter: $adapter, Description: ${adapterStatus.description}, State: ${adapterStatus.initializationState}")
+                }
+                runOnUiThread {
+                    loadAdMobInterstitial()
+                    loadAdMobRewarded()
+                }
+            }
         } catch (e: Exception) {
-            Log.e("MainActivity", "AdMob initialization failed", e)
+            Log.e("MainActivity", "❌ AdMob initialization failed", e)
         }
 
         try {
-            val viewModel = MainViewModel(application)
+            viewModel = MainViewModel(application)
+            requestInterstitialCallback = {
+                triggerInterstitialAdFlow {
+                    viewModel.triggerPureSimulation()
+                }
+            }
             setContent {
                 RabiyaTheme {
                     Surface(
@@ -359,6 +529,10 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+    override fun onDestroy() {
+        requestInterstitialCallback = null
+        super.onDestroy()
     }
 }
 
@@ -17126,15 +17300,30 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
 
 
 
+                    val context = LocalContext.current
+                    val activity = context as? MainActivity
+
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Button(
                             onClick = {
-                                isRewardedDialogVisible = true
-                                viewModel.watchRewardedAd {
-                                    isRewardedDialogVisible = false
+                                if (activity != null) {
+                                    activity.triggerRewardedAdFlow(
+                                        onRewardEarned = {},
+                                        onFallback = {
+                                            isRewardedDialogVisible = true
+                                            viewModel.watchRewardedAd {
+                                                isRewardedDialogVisible = false
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    isRewardedDialogVisible = true
+                                    viewModel.watchRewardedAd {
+                                        isRewardedDialogVisible = false
+                                    }
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = CyberPink),
@@ -17145,7 +17334,17 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
                         }
 
                         Button(
-                            onClick = { viewModel.triggerSimulatedInterstitialAd() },
+                            onClick = {
+                                if (activity != null) {
+                                    activity.triggerInterstitialAdFlow(
+                                        onFallback = {
+                                            viewModel.triggerSimulatedInterstitialAd()
+                                        }
+                                    )
+                                } else {
+                                    viewModel.triggerSimulatedInterstitialAd()
+                                }
+                            },
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E293B)),
                             modifier = Modifier.weight(1f),
                             border = BorderStroke(1.dp, CyberCyan.copy(alpha = 0.4f)),
@@ -27091,6 +27290,24 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                         setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                         // Real AdMob Banner Ad Unit ID
                         adUnitId = "ca-app-pub-9219846238670981/6015737837"
+                        adListener = object : com.google.android.gms.ads.AdListener() {
+                            override fun onAdLoaded() {
+                                Log.d("AdMobBanner", "✅ Banner Ad loaded successfully! (Unit: ca-app-pub-9219846238670981/6015737837)")
+                            }
+                            override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
+                                Log.e("AdMobBanner", "❌ Banner Ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                            }
+                            override fun onAdOpened() {
+                                Log.d("AdMobBanner", "Banner Ad opened (clicked).")
+                            }
+                            override fun onAdClicked() {
+                                Log.d("AdMobBanner", "Banner Ad click recorded.")
+                            }
+                            override fun onAdImpression() {
+                                Log.d("AdMobBanner", "Banner Ad impression recorded.")
+                            }
+                        }
+                        Log.d("AdMobBanner", "⌛ Requesting Banner Ad: ca-app-pub-9219846238670981/6015737837")
                         loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                     }
                 }

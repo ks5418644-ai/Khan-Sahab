@@ -264,12 +264,21 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _isAdBlockerActive.value = !_isAdBlockerActive.value
     }
 
-    fun triggerSimulatedInterstitialAd() {
-        if (_isAdBlockerActive.value) return
+    fun triggerPureSimulation() {
         viewModelScope.launch {
             _isInterstitialAdActive.value = true
             kotlinx.coroutines.delay(2200) // Show for 2.2 seconds
             _isInterstitialAdActive.value = false
+        }
+    }
+
+    fun triggerSimulatedInterstitialAd() {
+        if (_isAdBlockerActive.value) return
+        val callback = MainActivity.requestInterstitialCallback
+        if (callback != null) {
+            callback.invoke()
+        } else {
+            triggerPureSimulation()
         }
     }
 
