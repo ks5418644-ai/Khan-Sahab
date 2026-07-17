@@ -1,5 +1,5 @@
 {
-  "name": "Rabiya",
+  "name": "Rabiya Sufi AI",
   "description": "Your Smart AI Companion",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
