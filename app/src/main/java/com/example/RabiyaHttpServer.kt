@@ -58,18 +58,30 @@ class RabiyaHttpServer(
             val method = parts[0]
             val path = parts[1]
 
-            // Read headers to find Content-Length for POST request
+            // Read headers to find Content-Length and Cookie
             var contentLength = 0
+            var cookieToken = ""
             var line: String?
             while (reader.readLine().also { line = it } != null) {
                 if (line!!.isEmpty()) break
-                if (line!!.lowercase().startsWith("content-length:")) {
+                val lowerLine = line!!.lowercase()
+                if (lowerLine.startsWith("content-length:")) {
                     contentLength = line!!.substring(15).trim().toIntOrNull() ?: 0
+                } else if (lowerLine.startsWith("cookie:")) {
+                    val cookieContent = line!!.substring(7).trim()
+                    cookieContent.split(";").forEach { cookiePart ->
+                        val trimmedPart = cookiePart.trim()
+                        if (trimmedPart.startsWith("RabiyaSessionToken=")) {
+                            cookieToken = trimmedPart.substring(19).trim()
+                        }
+                    }
                 }
             }
 
             if (method == "GET") {
-                if (path == "/") {
+                if (!isAuthorized(path, cookieToken)) {
+                    serveAuthChallenge(out)
+                } else if (path == "/" || path.startsWith("/?")) {
                     serveHtmlIndex(out)
                 } else if (path.startsWith("/download")) {
                     serveFileDownload(path, out)
@@ -79,7 +91,11 @@ class RabiyaHttpServer(
                     serve404(out)
                 }
             } else if (method == "POST" && path.startsWith("/upload")) {
-                handleFileUpload(path, contentLength, socket.getInputStream(), out)
+                if (!isAuthorized(path, cookieToken)) {
+                    out.write("HTTP/1.1 401 Unauthorized\r\n\r\n".toByteArray())
+                } else {
+                    handleFileUpload(path, contentLength, socket.getInputStream(), out)
+                }
             } else {
                 serve404(out)
             }
@@ -560,5 +576,167 @@ class RabiyaHttpServer(
             out.write("\r\n".toByteArray())
             out.write(resp)
         } catch (ignored: Exception) {}
+    }
+
+    private fun isAuthorized(path: String, cookieToken: String): Boolean {
+        val pin = viewModel.serverSecurityPin.value
+        if (pin.isEmpty()) return true
+        
+        if (cookieToken == pin) return true
+        
+        try {
+            val queryIdx = path.indexOf("?")
+            if (queryIdx != -1) {
+                val query = path.substring(queryIdx + 1)
+                query.split("&").forEach { pair ->
+                    val entry = pair.split("=")
+                    if (entry.size == 2) {
+                        val key = entry[0]
+                        val value = URLDecoder.decode(entry[1], "UTF-8")
+                        if (key == "pin" && value == pin) {
+                            return true
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            // ignore
+        }
+        
+        return false
+    }
+
+    private fun serveAuthChallenge(out: BufferedOutputStream) {
+        val html = StringBuilder()
+        html.append("HTTP/1.1 200 OK\r\n")
+        html.append("Content-Type: text/html; charset=utf-8\r\n")
+        html.append("\r\n")
+        
+        html.append("""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Rabiya AI - Cyber Shield Authorization</title>
+                <style>
+                    body {
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                        background-color: #080c14;
+                        color: #ffffff;
+                        margin: 0;
+                        padding: 0;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        height: 100vh;
+                    }
+                    .auth-card {
+                        background: #0f1524;
+                        border: 2px solid #ff007f;
+                        box-shadow: 0 0 25px rgba(255, 0, 127, 0.4);
+                        border-radius: 18px;
+                        padding: 40px;
+                        max-width: 420px;
+                        width: 90%;
+                        text-align: center;
+                    }
+                    .icon {
+                        font-size: 48px;
+                        margin-bottom: 15px;
+                        color: #ff007f;
+                        text-shadow: 0 0 10px rgba(255,0,127,0.5);
+                    }
+                    h2 {
+                        margin: 10px 0;
+                        color: #00f3ff;
+                        font-size: 22px;
+                        letter-spacing: 1px;
+                        text-transform: uppercase;
+                    }
+                    p {
+                        color: #94a3b8;
+                        font-size: 13px;
+                        line-height: 1.6;
+                        margin-bottom: 25px;
+                    }
+                    input[type="text"] {
+                        width: 100%;
+                        background: #111728;
+                        border: 2px solid #1e293b;
+                        border-radius: 10px;
+                        padding: 14px;
+                        font-size: 18px;
+                        color: #fff;
+                        text-align: center;
+                        letter-spacing: 4px;
+                        font-weight: bold;
+                        outline: none;
+                        transition: border-color 0.2s;
+                        box-sizing: border-box;
+                    }
+                    input[type="text"]:focus {
+                        border-color: #00f3ff;
+                        box-shadow: 0 0 10px rgba(0, 243, 255, 0.3);
+                    }
+                    button {
+                        width: 100%;
+                        background: linear-gradient(135deg, #00f3ff, #ff007f);
+                        border: none;
+                        border-radius: 10px;
+                        color: #000000;
+                        padding: 14px;
+                        font-size: 15px;
+                        font-weight: bold;
+                        cursor: pointer;
+                        margin-top: 20px;
+                        transition: opacity 0.2s, box-shadow 0.2s;
+                    }
+                    button:hover {
+                        opacity: 0.9;
+                        box-shadow: 0 0 15px rgba(255,0,127,0.4);
+                    }
+                    .footer-note {
+                        margin-top: 25px;
+                        font-size: 11px;
+                        color: #475569;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="auth-card">
+                    <div class="icon">🔒</div>
+                    <h2>Rabiya Cyber Shield</h2>
+                    <p>This network link is fully encrypted and secured. Please enter the 6-digit Security PIN shown on the application screen to authorize computer-to-app file transfers.</p>
+                    <input type="text" id="pinInput" placeholder="******" maxlength="6" autocomplete="off" />
+                    <button onclick="validatePin()">AUTHORIZE ACCESS</button>
+                    <div class="footer-note">Powered by Rabiya Sufi AI Safe Security Protocols</div>
+                </div>
+                <script>
+                    function validatePin() {
+                        var pin = document.getElementById('pinInput').value.trim();
+                        if (pin.length < 4) {
+                            alert('Invalid PIN format. Please check the PIN on your mobile app screen.');
+                            return;
+                        }
+                        document.cookie = "RabiyaSessionToken=" + pin + "; path=/; max-age=86400";
+                        window.location.reload();
+                    }
+                    // Press Enter to submit
+                    document.getElementById('pinInput').addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            validatePin();
+                        }
+                    });
+                </script>
+            </body>
+            </html>
+        """.trimIndent())
+        
+        try {
+            out.write(html.toString().toByteArray())
+        } catch (e: Exception) {
+            Log.e("RabiyaHttpServer", "Error sending auth challenge page", e)
+        }
     }
 }

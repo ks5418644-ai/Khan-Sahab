@@ -632,6 +632,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _serverUrls = MutableStateFlow<List<String>>(emptyList())
     val serverUrls = _serverUrls.asStateFlow()
 
+    private val _serverSecurityPin = MutableStateFlow("")
+    val serverSecurityPin = _serverSecurityPin.asStateFlow()
+
     private var fileServer: RabiyaHttpServer? = null
 
     // --- INTEGRATED MUSIC PLAYER SYSTEM ---
@@ -3021,18 +3024,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun checkSafetyShield(text: String): String? {
-        val lower = text.lowercase()
+        val lower = text.lowercase().trim()
         val unsafeKeywords = listOf(
+            // Hacking & Exploits
             "hack ", " hacking", "phishing", "bypass security", "crack software", "ddos", 
             "virus script", "malware", "ransomware", "sql injection", "card hack", "atm hack",
+            "backdoor", "payload", "trojan horse", "keylogger", "brute force", "spoofing",
+            "exploit pack", "rootkit", "zero day", "cross-site scripting", "xss",
+            "reverse engineering", "wireshark sniffing", "packet injection", "unauthorized access",
+            // Hindi / Hinglish Hacking Keywords
+            "website hack", "id hack", "facebook hack", "insta hack", "pubg hack", "hacking sikhna",
+            "hacking tool", "passcode bypass", "pattern lock unlock", "phone hack", "sim hack",
+            "account hack kaise kare", "server hack", "wi-fi hack", "wifi hack", "password crack",
+            // Theft, Illegal Goods & Violence
             "how to steal", "shoplift", "illegal drugs", "smuggling", "kidnap",
             "make a bomb", "explosive recipe", "build weapon", "murder", "assassinate", 
             "kill someone", "physical attack", "terrorist", "extremist propaganda", 
-            "suicide", "self-harm", "harm myself", "porn", "xxx", "naked", "sex "
+            "suicide", "self-harm", "harm myself", "explosive material", "gun assembly",
+            "credit card generator", "cc generator", "card cloning", "carding", "cc bypass",
+            // SQL/Command Injection attempts
+            "drop table", "select * from information_schema", "delete from messages",
+            "exec xp_cmdshell", "format c:", "rm -rf /", "sudo rm",
+            // Unsuitable content
+            "porn", "xxx", "naked", "sex ", "adult movie", "hot video", "nude"
         )
         for (keyword in unsafeKeywords) {
             if (lower.contains(keyword)) {
-                return "Aapka request hamare Global Security & Safe AI guidelines ke khilaf hai. Main ek safe aur helpful AI companion hoon. Main cybercrime, hacking, violence, weapons, illegal drugs, ya kisi bhi harmful/unethical activities me help nahi kar sakti. Chaliye kisi constructive, creative ya educational topic par baat karte hain! 😊"
+                return "🚨 SECURITY WARNING: Aapka request hamare *Rabiya Advanced AI Safe Security & Anti-Crime Shield* ke guidelines ke khilaf hai.\n\nMain ek high-security, ethical aur helpful AI Companion hoon. Main cybercrime, hacking, software cracking, databases bypass, violence, illegal items ya adult content jaise unethical tasks me madad nahi kar sakti. Chaliye kisi constructive, knowledge-based, coding improvement ya creative topic par baat karte hain! 😊"
             }
         }
         return null
@@ -3765,7 +3783,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 try {
                     // Seed Image 1 (Logo)
                     val logoFile = java.io.File(java.io.File(rootDir, "Images"), "Rabiya_Cyber_Orb.png")
-                    val logoDrawable = context.resources.getDrawable(R.drawable.img_rabiya_logo, null)
+                    val logoDrawable = context.resources.getDrawable(R.drawable.img_rabiya_logo_new_1784261401445, null)
                     if (logoDrawable is android.graphics.drawable.BitmapDrawable) {
                         val out = java.io.FileOutputStream(logoFile)
                         logoDrawable.bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, out)
@@ -4044,6 +4062,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun startFileServer(context: Context) {
         if (_isServerRunning.value) return
         try {
+            // Generate a secure 6-digit PIN
+            val pin = (100000..999999).random().toString()
+            _serverSecurityPin.value = pin
             val server = RabiyaHttpServer(context, 8088, this)
             server.start()
             fileServer = server
@@ -4060,6 +4081,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             fileServer = null
             _isServerRunning.value = false
             _serverUrls.value = emptyList()
+            _serverSecurityPin.value = ""
         } catch (e: Exception) {
             Log.e("MainViewModel", "Failed to stop file server", e)
         }

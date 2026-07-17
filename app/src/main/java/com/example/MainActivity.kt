@@ -13061,6 +13061,7 @@ fun FileManagerScreen(viewModel: MainViewModel) {
     val copiedFile by viewModel.copiedFile.collectAsStateWithLifecycle()
     val isServerRunning by viewModel.isServerRunning.collectAsStateWithLifecycle()
     val serverUrls by viewModel.serverUrls.collectAsStateWithLifecycle()
+    val serverSecurityPin by viewModel.serverSecurityPin.collectAsStateWithLifecycle()
     val scope = rememberCoroutineScope()
     
     var selectedFolder by remember { mutableStateOf<String?>(null) } // null = Main folders, or "Images", "Voice", "Video", "PDFs", "Documents", "InternalStorage/<folderName>"
@@ -13220,7 +13221,7 @@ fun FileManagerScreen(viewModel: MainViewModel) {
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         Image(
-                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.img_rabiya_logo),
+                            painter = androidx.compose.ui.res.painterResource(id = R.drawable.img_rabiya_logo_new_1784261401445),
                             contentDescription = "Rabiya File Core",
                             modifier = Modifier
                                 .size(56.dp)
@@ -13241,184 +13242,6 @@ fun FileManagerScreen(viewModel: MainViewModel) {
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Medium
                             )
-                        }
-                    }
-                }
-            }
-
-            // SECTION A: USB & COMPUTER FILE DESK PORTAL
-            item {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(CardSpace, RoundedCornerShape(18.dp))
-                        .border(1.dp, if (isServerRunning) SuccessGreen.copy(alpha = 0.5f) else GridSpace, RoundedCornerShape(18.dp))
-                        .padding(14.dp)
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(8.dp)
-                                        .background(if (isServerRunning) SuccessGreen else CyberPink, CircleShape)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "🪐 RABIYA CYBER FILE DESK",
-                                    color = if (isServerRunning) SuccessGreen else Color.White,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.5.sp
-                                )
-                            }
-                            
-                            Switch(
-                                checked = isServerRunning,
-                                onCheckedChange = { active ->
-                                    if (active) {
-                                        viewModel.startFileServer(context)
-                                    } else {
-                                        viewModel.stopFileServer()
-                                    }
-                                },
-                                colors = SwitchDefaults.colors(
-                                    checkedThumbColor = SuccessGreen,
-                                    checkedTrackColor = SuccessGreen.copy(alpha = 0.3f),
-                                    uncheckedThumbColor = CyberPink,
-                                    uncheckedTrackColor = GridSpace
-                                )
-                            )
-                        }
-
-                        Text(
-                            text = "Connect your laptop/computer via USB (Debugging/Tethering) or local Wi-Fi to browse, delete, download files, or upload custom data into any folder directly!",
-                            color = TextMuted,
-                            fontSize = 10.sp
-                        )
-
-                        if (isServerRunning) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .background(GridSpace, RoundedCornerShape(10.dp))
-                                    .padding(10.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text("🔥 DESK CONNECTED & LIVE", color = SuccessGreen, fontSize = 9.sp, fontWeight = FontWeight.Bold)
-                                    
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                        modifier = Modifier
-                                            .background(SuccessGreen.copy(alpha = 0.1f), RoundedCornerShape(4.dp))
-                                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Security,
-                                            contentDescription = "Secured",
-                                            tint = SuccessGreen,
-                                            modifier = Modifier.size(10.dp)
-                                        )
-                                        Text("SECURE", color = SuccessGreen, fontSize = 8.sp, fontWeight = FontWeight.Bold)
-                                    }
-                                }
-
-                                Text("Open either URL on your Laptop / Computer browser:", color = TextLight, fontSize = 9.sp)
-                                
-                                serverUrls.forEach { url ->
-                                    val displayedText = if (url.startsWith("http://")) {
-                                        val partAfterHttp = url.substring(7)
-                                        val colonIdx = partAfterHttp.indexOf(':')
-                                        if (colonIdx != -1) {
-                                            "http://***.***.***.***" + partAfterHttp.substring(colonIdx)
-                                        } else {
-                                            "http://***.***.***.***:8088"
-                                        }
-                                    } else {
-                                        "http://***.***.***.***:8088"
-                                    }
-                                    
-                                    Row(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .background(CardSpace.copy(alpha = 0.6f), RoundedCornerShape(6.dp))
-                                            .border(0.5.dp, GridSpace, RoundedCornerShape(6.dp))
-                                            .clickable {
-                                                android.widget.Toast.makeText(context, "Privacy Mode Active: IP Address hidden and secured.", android.widget.Toast.LENGTH_SHORT).show()
-                                            }
-                                            .padding(horizontal = 8.dp, vertical = 6.dp),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween
-                                    ) {
-                                        Text(
-                                            text = displayedText,
-                                            color = TextMuted,
-                                            fontSize = 11.sp,
-                                            fontWeight = FontWeight.ExtraBold,
-                                            fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace
-                                        )
-                                        Icon(
-                                            imageVector = Icons.Default.Lock,
-                                            contentDescription = "Secure",
-                                            tint = TextMuted,
-                                            modifier = Modifier.size(12.dp)
-                                        )
-                                    }
-                                }
-                                Text("🔒 Device IP address details are fully locked and hidden for your privacy.", color = TextMuted, fontSize = 8.sp)
-                                
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .background(Color(0xFF131A2D), RoundedCornerShape(8.dp))
-                                        .border(0.5.dp, CyberCyan.copy(alpha = 0.2f), RoundedCornerShape(8.dp))
-                                        .padding(8.dp)
-                                ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically) {
-                                            Icon(
-                                                imageVector = Icons.Default.Security,
-                                                contentDescription = "Security Status",
-                                                tint = SuccessGreen,
-                                                modifier = Modifier.size(12.dp)
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                "100% PRIVATE & SECURE LOCAL DESK",
-                                                color = SuccessGreen,
-                                                fontSize = 8.sp,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        Text(
-                                            text = "Yeh IP addresses aapke ghar ke local Wi-Fi router ya USB connection ke hain. Yeh global internet par publish nahi hote aur na hi koi outsider/hacker ise use kar sakta hai. Screen sharing ya screenshots ki protection ke liye, humne isko default hidden rakha hai.",
-                                            color = TextMuted,
-                                            fontSize = 8.sp,
-                                            lineHeight = 11.sp
-                                        )
-                                    }
-                                }
-                            }
-                        } else {
-                            Row(
-                                modifier = Modifier.fillMaxWidth().background(GridSpace, RoundedCornerShape(10.dp)).padding(8.dp),
-                                horizontalArrangement = Arrangement.Center,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(Icons.Default.WifiOff, contentDescription = null, tint = TextMuted, modifier = Modifier.size(14.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Desk Server Stopped. Turn on switch to link Computer.", color = TextMuted, fontSize = 9.sp)
-                            }
                         }
                     }
                 }
@@ -26427,7 +26250,7 @@ fun MarkdownText(
 fun SleekNativeBannerAd(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111"
+    adUnitId: String = "ca-app-pub-9219846238670981/6015737837"
 ) {
     val isPro by viewModel.isProStatusUnlocked.collectAsStateWithLifecycle()
     val isAdBlockerActive by viewModel.isAdBlockerActive.collectAsStateWithLifecycle()
@@ -27167,7 +26990,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("Support Email:", color = TextMuted, fontSize = 9.sp)
-                                        Text("support@rabiya-sufi-ai.web.app", color = CyberCyan, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                        Text("support.rabiyasufi.ai@gmail.com", color = CyberCyan, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("App Version:", color = TextMuted, fontSize = 9.sp)
@@ -27183,7 +27006,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                             Button(
                                 onClick = {
                                     val intent = android.content.Intent(android.content.Intent.ACTION_SENDTO).apply {
-                                        data = android.net.Uri.parse("mailto:support@rabiya-sufi-ai.web.app")
+                                        data = android.net.Uri.parse("mailto:support.rabiyasufi.ai@gmail.com")
                                         putExtra(android.content.Intent.EXTRA_SUBJECT, "Rabiya Sufi AI Compliance & Publisher Request")
                                     }
                                     try {
