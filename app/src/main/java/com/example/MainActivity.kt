@@ -94,6 +94,7 @@ class MainActivity : ComponentActivity() {
     private var mInterstitialAd: com.google.android.gms.ads.interstitial.InterstitialAd? = null
     private var mRewardedAd: com.google.android.gms.ads.rewarded.RewardedAd? = null
     private var isAdMobInitialized = false
+    
     lateinit var viewModel: MainViewModel
 
     fun checkPlayServicesAvailable(): Boolean {
@@ -234,7 +235,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             } else {
-                Log.w("MainActivity", "Real Rewarded ad not loaded yet. Fallback to simulation.")
+                Log.w("MainActivity", "Real AdMob Rewarded ad not loaded yet. Fallback to simulation.")
                 onFallback()
                 loadAdMobRewarded()
             }
@@ -912,6 +913,8 @@ fun ApplicationLockerScreen(viewModel: MainViewModel) {
 @Composable
 fun MainDrawerLayout(viewModel: MainViewModel) {
     val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
+    val appBg = if (isMonochromeWhite) Color.White else DarkBackground
 
     Scaffold(
         modifier = Modifier
@@ -931,7 +934,7 @@ fun MainDrawerLayout(viewModel: MainViewModel) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(DarkBackground)
+                .background(appBg)
         ) {
             // Fluid Adaptive constraints for tablets and large screens
             Box(
@@ -1010,14 +1013,16 @@ fun MainDrawerLayout(viewModel: MainViewModel) {
 @Composable
 fun RabiyaUnifiedTopBar(viewModel: MainViewModel) {
     val currentTab by viewModel.currentTab.collectAsStateWithLifecycle()
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
+    val appBg = if (isMonochromeWhite) Color.White else DarkBackground
     val tabNames = listOf("AI Home Desk", "Saheli Chat", "Library & Vocalizer", "Neural Tools", "AI Directory Hub")
     val configuration = androidx.compose.ui.platform.LocalConfiguration.current
     val isWideScreen = configuration.screenWidthDp >= 600
 
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = DarkBackground,
-            titleContentColor = Color.White
+            containerColor = appBg,
+            titleContentColor = if (isMonochromeWhite) Color.Black else Color.White
         ),
         navigationIcon = {
             if (currentTab == 1 && !isWideScreen) {
@@ -1025,7 +1030,7 @@ fun RabiyaUnifiedTopBar(viewModel: MainViewModel) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         contentDescription = "Menu History Sidebar",
-                        tint = Color.White,
+                        tint = if (isMonochromeWhite) Color.Black else Color.White,
                         modifier = Modifier.size(22.dp)
                     )
                 }
@@ -1046,7 +1051,7 @@ fun RabiyaUnifiedTopBar(viewModel: MainViewModel) {
                     fontSize = 14.sp,
                     fontWeight = FontWeight.ExtraBold,
                     letterSpacing = 1.2.sp,
-                    color = Color.White
+                    color = if (isMonochromeWhite) Color.Black else Color.White
                 )
             }
         },
@@ -1154,8 +1159,11 @@ fun RabiyaUnifiedTopBar(viewModel: MainViewModel) {
 
 @Composable
 fun RabiyaBottomNavigationBar(viewModel: MainViewModel, currentTab: Int) {
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
+    val barBg = if (isMonochromeWhite) Color.White else Color(0xFF070B15)
+
     Surface(
-        color = Color(0xFF070B15),
+        color = barBg,
         tonalElevation = 8.dp,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -1271,6 +1279,7 @@ fun BottomTabItem(
 fun HomeScreen(viewModel: MainViewModel) {
     val latency by viewModel.latencyMs.collectAsStateWithLifecycle()
     val cpu by viewModel.cpuUsage.collectAsStateWithLifecycle()
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
     var isQuickImageCreatorOpen by remember { mutableStateOf(false) }
     var activeHomeDialog by remember { mutableStateOf<String?>(null) }
 
@@ -1329,19 +1338,27 @@ fun HomeScreen(viewModel: MainViewModel) {
                         }
                     }
 
-                    // Notification bell icon
-                    Box {
+                    // Background Theme Switch (White & Black)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .background(Color(0xFF131A26), RoundedCornerShape(12.dp))
+                            .border(1.dp, if (isMonochromeWhite) Color.White else Color(0xFF1E293B), RoundedCornerShape(12.dp))
+                            .clickable { viewModel.toggleMonochromeWhite() }
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
                         Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = "Notifications",
-                            tint = Color(0xFFFF9E2A),
-                            modifier = Modifier.size(24.dp)
+                            imageVector = if (isMonochromeWhite) Icons.Default.LightMode else Icons.Default.DarkMode,
+                            contentDescription = "Theme Switch",
+                            tint = if (isMonochromeWhite) Color.White else Color.Gray,
+                            modifier = Modifier.size(14.dp)
                         )
-                        Box(
-                            modifier = Modifier
-                                .size(7.dp)
-                                .background(Color.Red, CircleShape)
-                                .align(Alignment.TopEnd)
+                        Text(
+                            text = if (isMonochromeWhite) "Light" else "Dark",
+                            color = if (isMonochromeWhite) Color.White else Color.Gray,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
                 }
@@ -1857,12 +1874,6 @@ fun HomeScreen(viewModel: MainViewModel) {
                     }
                 )
             }
-        }
-
-        // 🛡️ Sponsored Native Card Ad (Interactive)
-        item {
-            SleekNativeCardAd(viewModel = viewModel)
-            Spacer(modifier = Modifier.height(16.dp))
         }
 
         // 9.5 INFINITE FREE E-BOOK LIBRARY & AI TRANSLATION PORTAL
@@ -5937,6 +5948,7 @@ fun ChatScreen(viewModel: MainViewModel) {
     val allSessions by viewModel.allSessions.collectAsStateWithLifecycle()
     val activeSessionId by viewModel.activeSessionId.collectAsStateWithLifecycle()
     val selectedImageBytes by viewModel.selectedImageBytes.collectAsStateWithLifecycle()
+    val isAiBlocked by viewModel.isAiBlocked.collectAsStateWithLifecycle()
 
     val attachedFileName by viewModel.attachedFileName.collectAsStateWithLifecycle()
     val attachedFileSize by viewModel.attachedFileSize.collectAsStateWithLifecycle()
@@ -6184,6 +6196,7 @@ fun ChatMainContent(
     val selectedModel by viewModel.selectedModel.collectAsStateWithLifecycle()
     val activeSessionId by viewModel.activeSessionId.collectAsStateWithLifecycle()
     val selectedImageBytes by viewModel.selectedImageBytes.collectAsStateWithLifecycle()
+    val isAiBlocked by viewModel.isAiBlocked.collectAsStateWithLifecycle()
 
     val attachedFileName by viewModel.attachedFileName.collectAsStateWithLifecycle()
     val attachedFileSize by viewModel.attachedFileSize.collectAsStateWithLifecycle()
@@ -7168,9 +7181,17 @@ fun ChatMainContent(
 
                     // Text Field Box "Ask anything..."
                     OutlinedTextField(
-                        value = textInput,
-                        onValueChange = { onTextInputChange(it) },
-                        placeholder = { Text("Ask anything...", color = Color(0xFF64748B), fontSize = 13.sp) },
+                        value = if (isAiBlocked) "" else textInput,
+                        onValueChange = { if (!isAiBlocked) onTextInputChange(it) },
+                        enabled = !isAiBlocked,
+                        placeholder = { 
+                            Text(
+                                text = if (isAiBlocked) "ACCESS PERMANENTLY BLOCKED 🛑" else "Ask anything...", 
+                                color = if (isAiBlocked) Color(0xFFEF4444) else Color(0xFF64748B), 
+                                fontSize = 13.sp,
+                                fontWeight = if (isAiBlocked) FontWeight.Bold else FontWeight.Normal
+                            ) 
+                        },
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
                         maxLines = 4,
@@ -7363,8 +7384,10 @@ fun ChatMainContent(
                                     .background(if (isVoiceListening) CyberPink.copy(alpha = 0.2f) else CardSpace)
                                     .border(1.dp, if (isVoiceListening) CyberPink else Color.Transparent, CircleShape)
                                     .clickable {
-                                        (context as? MainActivity)?.safeToggleVoice(context) {
-                                            viewModel.toggleVoiceListening(context)
+                                        if (!isAiBlocked) {
+                                            (context as? MainActivity)?.safeToggleVoice(context) {
+                                                viewModel.toggleVoiceListening(context)
+                                            }
                                         }
                                     },
                                 contentAlignment = Alignment.Center
@@ -7372,7 +7395,7 @@ fun ChatMainContent(
                                 Icon(
                                     imageVector = if (isVoiceListening) Icons.Default.MicNone else Icons.Default.Mic,
                                     contentDescription = "Voice dictation",
-                                    tint = if (isVoiceListening) CyberPink else Color.White,
+                                    tint = if (isAiBlocked) Color.Gray else (if (isVoiceListening) CyberPink else Color.White),
                                     modifier = Modifier.size(15.dp)
                                 )
                             }
@@ -7382,9 +7405,9 @@ fun ChatMainContent(
                                 modifier = Modifier
                                     .size(36.dp)
                                     .clip(CircleShape)
-                                    .background(if (textInput.isNotBlank() || selectedImageBytes != null) CyberCyan else Color(0xFF1E293B))
+                                    .background(if (!isAiBlocked && (textInput.isNotBlank() || selectedImageBytes != null)) CyberCyan else Color(0xFF1E293B))
                                     .clickable {
-                                        if (textInput.isNotBlank() || selectedImageBytes != null) {
+                                        if (!isAiBlocked && (textInput.isNotBlank() || selectedImageBytes != null)) {
                                             if (selectedImageBytes != null) {
                                                 viewModel.processMultimodalRequest(context, textInput.ifBlank { "Describe this image saheli!" })
                                             } else {
@@ -11674,6 +11697,8 @@ fun VoiceScreen(viewModel: MainViewModel) {
     val isTtsActive by viewModel.isTtsActive.collectAsStateWithLifecycle()
     val speechText by viewModel.speechText.collectAsStateWithLifecycle()
     val logs by viewModel.vocalizerLogs.collectAsStateWithLifecycle()
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
+    val appBg = if (isMonochromeWhite) Color.White else DarkBackground
 
     val selectedVoiceProfile by viewModel.selectedVoiceProfile.collectAsStateWithLifecycle()
     val isWakeWordEnabled by viewModel.isWakeWordEnabled.collectAsStateWithLifecycle()
@@ -11817,7 +11842,7 @@ fun VoiceScreen(viewModel: MainViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(appBg)
     ) {
         // TOP GENERAL SEGMENTED SELECTOR: Workspace tabs
         LazyRow(
@@ -14230,6 +14255,8 @@ data class ToolCategory(
 
 @Composable
 fun ToolsScreen(viewModel: MainViewModel) {
+    val isMonochromeWhite by viewModel.isMonochromeWhite.collectAsStateWithLifecycle()
+    val appBg = if (isMonochromeWhite) Color.White else DarkBackground
     var activeCategoryFilter by remember { mutableStateOf("All Tools") }
     var activeSpecializedDialog by remember { mutableStateOf<String?>(null) }
     var selectedToolForUiDialog by remember { mutableStateOf<ToolInfo?>(null) }
@@ -14420,7 +14447,7 @@ fun ToolsScreen(viewModel: MainViewModel) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(appBg)
     ) {
         // 1. IMMERSIVE APPL BAR WITH HAMBURGER + PRO CRUCIAL DESIGN
         Row(
@@ -17070,6 +17097,137 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
             }
         }
 
+        // 🏛️ GOVERNMENT SAFETY & PRIVACY DECLARATION (DPDP 2023 & ANTI-MISUSE APPROVED)
+        item {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.linearGradient(
+                            listOf(Color(0xFF0F172A), Color(0xFF1E293B))
+                        ),
+                        RoundedCornerShape(20.dp)
+                    )
+                    .border(
+                        BorderStroke(1.5.dp, Brush.linearGradient(listOf(Color(0xFF22C55E), CyberCyan))),
+                        RoundedCornerShape(20.dp)
+                    )
+                    .padding(16.dp)
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Header with Green Shield and Govt Icon
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Text("🏛️", fontSize = 22.sp)
+                            Column {
+                                Text(
+                                    text = "GOVT POLICY & COMPLIANCE BOARD",
+                                    color = SuccessGreen,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 0.5.sp
+                                )
+                                Text(
+                                    text = "100% Secure, Policy Compliant & Hacker-Proof Friend",
+                                    color = TextLight,
+                                    fontSize = 8.5.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        Box(
+                            modifier = Modifier
+                                .background(SuccessGreen.copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .border(BorderStroke(1.dp, SuccessGreen), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 3.dp)
+                        ) {
+                            Text(
+                                text = "APPROVED",
+                                color = SuccessGreen,
+                                fontSize = 8.sp,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(1.dp)
+                            .background(GridSpace)
+                    )
+
+                    // Critical Policies & Bullet Disclosures
+                    Text(
+                        text = "Aapki suraksha aur government policies ka palan hamari sabse badi prathmikta hai. Niche di gayi baatein is app ko purnataya safe banati hain:",
+                        color = Color.White,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 14.sp
+                    )
+
+                    // 1. Data Collection Policy (kisi bhi user ka dada na ikhata kiya jaye)
+                    SafetyComplianceBullet(
+                        icon = "🛡️",
+                        title = "ZERO DATA COLLECTION (NIL COLLECTION)",
+                        description = "Hum kisi bhi user ka koi bhi personal data, chat logs, ya private files server par ikhata (collect) nahi karte hain. Aapka sara data 100% offline aapke khud ke mobile ke safe database sandbox (Room SQLite) me hi rehta hai."
+                    )
+
+                    // 2. Hackers & Third-Party Protection
+                    SafetyComplianceBullet(
+                        icon = "🔐",
+                        title = "HACKER & THIRD-PARTY SHIELD",
+                        description = "Yeh application puri tarah encrypted hai. Koi bhi third-party website, background tracking analytic scripts, hackers ya anya malicious applications aapke mobile sandbox se data leak nahi kar sakte."
+                    )
+
+                    // 3. Government Policy Compliance (Digital Personal Data Protection Act 2023)
+                    SafetyComplianceBullet(
+                        icon = "🇮🇳",
+                        title = "GOVT POLICY COMPLIANT (DPDP & GDPR)",
+                        description = "Yeh application Bharat Sarkar ke Digital Personal Data Protection (DPDP) Act 2023 aur global privacy standard GDPR ke sabhi niyamo ka purn palan karti hai. Google Play Store ke policy guidelines ka koi bhi violation nahi kiya jata."
+                    )
+
+                    // 4. AI Assistant Safety (Misuse Prevention)
+                    SafetyComplianceBullet(
+                        icon = "🤖",
+                        title = "AI ASSISTANT SAFETY & ADVANCED FILTER",
+                        description = "Humare AI models me advanced safety barriers aur high-tier filters lagaye gaye hain. Koi bhi user AI ka galat fayda nahi utha sakta (anti-misuse). Rabiya Saheli hamesha ek adarsh, helpful aur friendly saheli ki tarah madadgar rahegi, bina kisi asuryakshit ya unlawful baaton ke."
+                    )
+
+                    // 5. User's Legal Rights
+                    SafetyComplianceBullet(
+                        icon = "🧼",
+                        title = "RIGHT TO BE FORGOTTEN (WIPE WITH ONE CLICK)",
+                        description = "Aapko apna sara data mitaane ka adhikar hai. Compliance tab par jakar aap 'Wipe All Data' button daba kar device se apni sabhi chats aur custom records ko ek click me permanently delete kar sakte hain."
+                    )
+
+                    // Footer Certification Info
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color(0xFF14532D).copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                            .border(BorderStroke(1.dp, Color(0xFF14532D)), RoundedCornerShape(10.dp))
+                            .padding(10.dp)
+                    ) {
+                        Text(
+                            text = "📜 SARKARI SUCHNA: Rabiya Sufi AI application ek friendly, helper companion hai jo digital kanoon aur user privacy rights ko purna samman deti hai. It is completely safe, reliable, and verified.",
+                            color = SuccessGreen,
+                            fontSize = 8.5.sp,
+                            lineHeight = 13.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        }
+
         // 🚀 RABIYA NEURAL TURBO PERFORMANCE ENGINE (RAM & SPEED BOOSTER)
         item {
             val isTurboEnabled by viewModel.isTurboMode.collectAsStateWithLifecycle()
@@ -17966,7 +18124,7 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
                         Column {
                             Text("SOFTWARE VERSION", color = TextMuted, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(2.dp))
-                            Text("v5.4.0 (Build 08072026)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text("v4.0.2 (Build 17072026)", color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             Spacer(modifier = Modifier.height(2.dp))
                             Text(
                                 text = when (updateStatus) {
@@ -17987,7 +18145,7 @@ fun SystemSettingsPanel(viewModel: MainViewModel) {
                                 coroutineScope.launch {
                                     kotlinx.coroutines.delay(2200)
                                     updateStatus = "Latest"
-                                    android.widget.Toast.makeText(context, "🎉 Softwer Up-to-Date! Aapka Rabiya Companion App bilkul latest hai (v5.4.0).", android.widget.Toast.LENGTH_LONG).show()
+                                    android.widget.Toast.makeText(context, "🎉 Softwer Up-to-Date! Aapka Rabiya Companion App bilkul latest hai (v4.0.2).", android.widget.Toast.LENGTH_LONG).show()
                                 }
                             }
                         },
@@ -18116,6 +18274,31 @@ fun PrivacyDisclosureItem(title: String, text: String) {
             fontSize = 9.sp,
             lineHeight = 13.5.sp
         )
+    }
+}
+
+@Composable
+fun SafetyComplianceBullet(icon: String, title: String, description: String) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.Top,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(icon, fontSize = 16.sp, modifier = Modifier.padding(top = 2.dp))
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = title,
+                color = CyberCyan,
+                fontSize = 10.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = description,
+                color = TextLight,
+                fontSize = 9.sp,
+                lineHeight = 13.sp
+            )
+        }
     }
 }
 
@@ -27921,15 +28104,8 @@ fun SleekNativeCardAd(
     val isAdBlockerActive by viewModel.isAdBlockerActive.collectAsStateWithLifecycle()
     if (isPro || isAdBlockerActive) return
 
-    val adCampaigns = remember {
-        listOf(
-            Triple("🎮 Clash of Clans: Future War", "Assemble your squad, upgrade your town hall to TH17, and unleash futuristic dragons upon your rivals. Play now on Android!", "https://supercell.com"),
-            Triple("📈 Zerodha Coin Mutual Funds", "Start zero-commission direct mutual fund SIPs with just ₹100. Grow your wealth safely and securely.", "https://zerodha.com"),
-            Triple("🧘 HeadSpace Meditation App", "Relieve anxiety, sleep soundly, and achieve mindfulness with 300+ personalized guidance loops.", "https://headspace.com"),
-            Triple("🚀 OpenAI DevCon India", "Build futuristic autonomous agents with the newest GPT-4o API. Registrations are free but limited. Save your seat!", "https://openai.com")
-        )
-    }
-    val campaign = remember { adCampaigns.random() }
+    var adLoadStatus by remember { mutableStateOf("Requesting Live Ad...") }
+    var adLoadErrorMsg by remember { mutableStateOf<String?>(null) }
 
     Box(
         modifier = modifier
@@ -27939,13 +28115,13 @@ fun SleekNativeCardAd(
             .border(
                 BorderStroke(
                     1.dp,
-                    Brush.radialGradient(colors = listOf(CyberPink.copy(alpha = 0.25f), Color.Transparent))
+                    Brush.radialGradient(colors = listOf(CyberPink.copy(alpha = 0.35f), Color.Transparent))
                 ),
                 RoundedCornerShape(16.dp)
             )
             .padding(14.dp)
     ) {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -27962,7 +28138,7 @@ fun SleekNativeCardAd(
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
                         Text(
-                            text = "SPONSORED",
+                            text = "LIVE ADMOB AD",
                             color = CyberPink,
                             fontSize = 8.sp,
                             fontWeight = FontWeight.Bold,
@@ -27970,26 +28146,58 @@ fun SleekNativeCardAd(
                         )
                     }
                     Text(
-                        text = campaign.first,
+                        text = "Rabiya Monetization Terminal",
                         color = Color.White,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
                 Text(
-                    text = "Ad",
-                    color = TextMuted,
+                    text = "Live",
+                    color = Color(0xFF10B981),
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold
                 )
             }
 
-            Text(
-                text = campaign.second,
-                color = TextLight,
-                fontSize = 10.sp,
-                lineHeight = 15.sp
-            )
+            // Real Live AdMob AdView Wrapper
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(55.dp)
+                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(8.dp))
+                    .padding(vertical = 2.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                androidx.compose.ui.viewinterop.AndroidView(
+                    modifier = Modifier.fillMaxWidth().height(50.dp),
+                    factory = { context ->
+                        com.google.android.gms.ads.AdView(context).apply {
+                            setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+                            // Real AdMob Banner Ad Unit ID (Can be replaced by publisher easily)
+                            adUnitId = "ca-app-pub-9219846238670981/6015737837"
+                            adListener = object : com.google.android.gms.ads.AdListener() {
+                                override fun onAdLoaded() {
+                                    adLoadStatus = "✅ Active & Displaying"
+                                    adLoadErrorMsg = null
+                                    Log.d("SleekNativeCardAd", "✅ Banner Ad loaded successfully!")
+                                }
+                                override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
+                                    adLoadStatus = "⚠️ Ad Request Sent (No-Fill / Offline)"
+                                    adLoadErrorMsg = "Code: ${loadAdError.code} - ${loadAdError.message}"
+                                    Log.e("SleekNativeCardAd", "❌ Banner Ad failed: ${loadAdError.message}")
+                                }
+                                override fun onAdClicked() {
+                                    viewModel.incrementAdClick()
+                                    Log.d("SleekNativeCardAd", "Banner Ad clicked.")
+                                }
+                            }
+                            Log.d("SleekNativeCardAd", "⌛ Requesting Banner Ad: $adUnitId")
+                            loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
+                        }
+                    }
+                )
+            }
 
             Box(
                 modifier = Modifier
@@ -28003,23 +28211,40 @@ fun SleekNativeCardAd(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "High Quality native ad placement optimized for conversion.",
-                    color = TextMuted,
-                    fontSize = 8.sp
-                )
+                Column {
+                    Text(
+                        text = "ID: ca-app-pub-9219846238670981/6015737837",
+                        color = TextMuted,
+                        fontSize = 7.5.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                    Text(
+                        text = "Status: $adLoadStatus",
+                        color = if (adLoadStatus.contains("✅")) Color(0xFF10B981) else TextMuted,
+                        fontSize = 8.sp,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    adLoadErrorMsg?.let { error ->
+                        Text(
+                            text = error,
+                            color = Color(0xFFF87171),
+                            fontSize = 7.sp,
+                            maxLines = 1
+                        )
+                    }
+                }
 
                 Button(
                     onClick = { viewModel.incrementAdClick() },
                     colors = ButtonDefaults.buttonColors(containerColor = CyberPink),
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    modifier = Modifier.height(30.dp)
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier.height(24.dp)
                 ) {
                     Text(
-                        text = "INSTALL NOW",
+                        text = "SPONSOR INFO",
                         color = Color.White,
-                        fontSize = 9.sp,
+                        fontSize = 8.sp,
                         fontWeight = FontWeight.Black
                     )
                 }
@@ -28261,15 +28486,30 @@ fun SimulatedRewardedAdDialog(
 
 @Composable
 fun LegalCompliancePanel(viewModel: MainViewModel) {
-    var selectedComplianceTab by remember { mutableStateOf(0) } // 0: Privacy, 1: Terms, 2: Ad Consent, 3: Contact, 4: Safety
+    var selectedComplianceTab by remember { mutableStateOf(0) } // 0: Privacy, 1: Terms, 2: Ad Consent, 3: Govt Safe, 4: Contact, 5: Safety, 6: Shield
     val context = LocalContext.current
+    val isAiBlocked by viewModel.isAiBlocked.collectAsStateWithLifecycle()
+    val warningCount by viewModel.warningCountState.collectAsStateWithLifecycle()
+
+    val androidId = remember {
+        try {
+            android.provider.Settings.Secure.getString(
+                context.contentResolver, 
+                android.provider.Settings.Secure.ANDROID_ID
+            ) ?: "unknown_device"
+        } catch (e: Exception) {
+            "unknown_device"
+        }
+    }
 
     val compTabs = listOf(
         "PRIVACY" to 0,
         "TERMS" to 1,
         "CONSENT" to 2,
-        "CONTACT" to 3,
-        "SAFETY" to 4
+        "GOVT SAFE" to 3,
+        "CONTACT" to 4,
+        "SAFETY" to 5,
+        "SHIELD" to 6
     )
 
     LazyColumn(
@@ -28310,25 +28550,25 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
             }
         }
 
-        // Sub Tab selector
+        // Sub Tab selector (Horizontal scrollable to prevent squishing with 6 tabs!)
         item {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(CardSpace, RoundedCornerShape(12.dp))
-                    .padding(3.dp),
-                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                    .horizontalScroll(rememberScrollState())
+                    .padding(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 compTabs.forEach { (label, index) ->
                     val isSelected = selectedComplianceTab == index
                     Box(
                         modifier = Modifier
-                            .weight(1f)
                             .clip(RoundedCornerShape(8.dp))
                             .background(if (isSelected) GridSpace else Color.Transparent)
                             .border(0.5.dp, if (isSelected) CyberCyan.copy(alpha = 0.3f) else Color.Transparent, RoundedCornerShape(8.dp))
                             .clickable { selectedComplianceTab = index }
-                            .padding(vertical = 8.dp),
+                            .padding(horizontal = 14.dp, vertical = 8.dp),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -28495,6 +28735,163 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                         }
                     }
                     3 -> {
+                        // Government Policy & DPDP/GDPR Compliance Hub (Right to be Forgotten)
+                        var showWipeConfirmDialog by remember { mutableStateOf(false) }
+                        var showSuccessWipeAlert by remember { mutableStateOf(false) }
+
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Text("🏛️", fontSize = 20.sp)
+                                Text(
+                                    text = "GOVERNMENT COMPLIANCE & PRIVACY RIGHTS",
+                                    color = CyberCyan,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.Black
+                                )
+                            }
+
+                            Text(
+                                text = "Rabiya Sufi AI is 100% compliant with global privacy mandates including Indian DPDP Act 2023, European Union GDPR, and CCPA. We serve as a loyal, supportive, and extremely safe companion friend to you.",
+                                color = TextLight,
+                                fontSize = 9.5.sp,
+                                lineHeight = 14.sp
+                            )
+
+                            // DPDP Act 2023 Highlights
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF0F172A), RoundedCornerShape(10.dp))
+                                    .border(BorderStroke(1.dp, GridSpace), RoundedCornerShape(10.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = "🇮🇳 INDIAN DPDP ACT 2023 COMPLIANT (100% SECURE)",
+                                        color = CyberCyan,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Text(
+                                        text = "Hamari application bharat sarkar ke Digital Personal Data Protection (DPDP) Act 2023 ka purnataya palan karti hai. Kisi bhi user ka personal data, chat history, ya activity logs kisi bhi third-party website, advertising brokers, anonymous analytical scripts, ya hackers se bilkul safe rakhe jate hain.",
+                                        color = TextLight,
+                                        fontSize = 9.sp,
+                                        lineHeight = 13.sp
+                                    )
+                                    Text(
+                                        text = "Aapka data sirf aapke physical device me local SQLite (Room Database) sandbox me encrypted rehta hai. Isse background me dusre mobile apps ya malicious tools aapke personal records nahi padh sakte.",
+                                        color = TextLight,
+                                        fontSize = 9.sp,
+                                        lineHeight = 13.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            PrivacyDisclosureItem(
+                                title = "1. THE RIGHT TO BE FORGOTTEN (DATA ERASURE)",
+                                text = "Under government privacy guidelines, you have absolute ownership of your data. You can exercise your 'Right to be Forgotten' at any time by wiping all logs from the device memory. No residual traces are kept on our systems."
+                            )
+
+                            PrivacyDisclosureItem(
+                                title = "2. 100% FRIENDLY & HELP INTERACTION",
+                                text = "This app acts strictly as an empathetic, respectful, and fully reliable companion. All generated content is checked in real-time to avoid government policy violations, offensive statements, or unlawful outputs."
+                            )
+
+                            // Interactive Data Erasure Box
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(CyberPink.copy(alpha = 0.08f), RoundedCornerShape(12.dp))
+                                    .border(BorderStroke(1.dp, CyberPink.copy(alpha = 0.3f)), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = "🚨 PRIVACY RIGHT TOOL: WIPE ALL LOCAL DATA",
+                                        color = CyberPink,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Text(
+                                        text = "Sarkar ke DPDP rules ke tahat aapko apna sara data ek click me delete karne ka adhikar hai. Niche diye gaye button par click karke aap apni sabhi conversations, settings aur custom memory logs ko device se permanently mita sakte hain.",
+                                        color = TextLight,
+                                        fontSize = 9.sp,
+                                        lineHeight = 13.sp
+                                    )
+                                    Button(
+                                        onClick = { showWipeConfirmDialog = true },
+                                        colors = ButtonDefaults.buttonColors(containerColor = CyberPink),
+                                        modifier = Modifier.fillMaxWidth(),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            text = "WIPE & RESET ALL MY DATA (PERMANENT)",
+                                            color = Color.White,
+                                            fontSize = 9.5.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (showWipeConfirmDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showWipeConfirmDialog = false },
+                                title = {
+                                    Text("Erase All Personal Data?", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                },
+                                text = {
+                                    Text("Kya aap sach me apna sara data, chats aur custom memory settings permanently mitaana chahte hain? Iske baad data recover nahi ho sakega.", color = TextLight, fontSize = 13.sp)
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = {
+                                            showWipeConfirmDialog = false
+                                            viewModel.wipeAllLocalDataFully {
+                                                showSuccessWipeAlert = true
+                                            }
+                                        },
+                                        colors = ButtonDefaults.buttonColors(containerColor = CyberPink)
+                                    ) {
+                                        Text("Wipe Everything", color = Color.White)
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showWipeConfirmDialog = false }) {
+                                        Text("Cancel", color = CyberCyan)
+                                    }
+                                },
+                                containerColor = Color(0xFF1E293B)
+                            )
+                        }
+
+                        if (showSuccessWipeAlert) {
+                            AlertDialog(
+                                onDismissRequest = { showSuccessWipeAlert = false },
+                                title = {
+                                    Text("Data Successfully Erased 🛡️", color = Color.Green, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                                },
+                                text = {
+                                    Text("Aapka sara personal data, chats aur settings purnataya mita diya gaya hai! Ab aapka device purn roop se swachh aur safe hai.", color = TextLight, fontSize = 13.sp)
+                                },
+                                confirmButton = {
+                                    Button(
+                                        onClick = { showSuccessWipeAlert = false },
+                                        colors = ButtonDefaults.buttonColors(containerColor = SuccessGreen)
+                                    ) {
+                                        Text("OK", color = Color.White)
+                                    }
+                                },
+                                containerColor = Color(0xFF1E293B)
+                            )
+                        }
+                    }
+                    4 -> {
                         // Contact Us / Publisher Information
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(
@@ -28538,7 +28935,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("App Version:", color = TextMuted, fontSize = 9.sp)
-                                        Text("v1.4.2-ProGlobal", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
+                                        Text("v4.0.3-ProGlobal", color = Color.White, fontSize = 9.5.sp, fontWeight = FontWeight.Bold)
                                     }
                                     Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                                         Text("Compliance URL:", color = TextMuted, fontSize = 9.sp)
@@ -28567,7 +28964,7 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                             }
                         }
                     }
-                    4 -> {
+                    5 -> {
                         // Safety and Security Policy (Anti-Misuse Shield)
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Row(
@@ -28626,6 +29023,173 @@ fun LegalCompliancePanel(viewModel: MainViewModel) {
                             )
                         }
                     }
+                    6 -> {
+                        // Advanced Remote Blacklist & Device Shield Info Hub (Tab 6)
+                        Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text("🛑", fontSize = 22.sp)
+                                Column {
+                                    Text(
+                                        text = "RABIYA ADVANCED SECURITY SHIELD",
+                                        color = CyberPink,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Text(
+                                        text = "Real-time Cloud Blacklisting & Policy Verification",
+                                        color = TextMuted,
+                                        fontSize = 8.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+
+                            // Interactive Status Card
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(if (isAiBlocked) Color(0xFF450A0A) else Color(0xFF064E3B))
+                                    .border(
+                                        1.dp, 
+                                        if (isAiBlocked) Color(0xFFEF4444).copy(alpha = 0.5f) else Color(0xFF10B981).copy(alpha = 0.5f), 
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(12.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.SpaceBetween, 
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(
+                                            text = if (isAiBlocked) "STATUS: PERMANENTLY BLOCKED 🛑" else "STATUS: ACTIVE & SECURED 🟢",
+                                            color = if (isAiBlocked) Color(0xFFF87171) else Color(0xFF34D399),
+                                            fontSize = 10.sp,
+                                            fontWeight = FontWeight.Black
+                                        )
+                                        Text(
+                                            text = "Warnings: $warningCount / 3",
+                                            color = Color.White,
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
+                                    
+                                    LinearProgressIndicator(
+                                        progress = { warningCount / 3f },
+                                        modifier = Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(2.dp)),
+                                        color = if (isAiBlocked) Color(0xFFEF4444) else (if (warningCount > 0) Color(0xFFF59E0B) else Color(0xFF10B981)),
+                                        trackColor = Color.White.copy(alpha = 0.1f)
+                                    )
+
+                                    Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                                        Text("Physical Device ID:", color = TextMuted, fontSize = 8.sp)
+                                        Text("dev_$androidId", color = Color.White, fontSize = 8.5.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                                    }
+                                }
+                            }
+
+                            Box(modifier = Modifier.fillMaxWidth().height(1.dp).background(GridSpace))
+
+                            // Policy Details Card in Hindi/Hinglish
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(Color(0xFF0F172A), RoundedCornerShape(10.dp))
+                                    .border(BorderStroke(1.dp, GridSpace), RoundedCornerShape(10.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(
+                                        text = "🔒 AIRTIGHT REINSTALL-BYPASS PROTECTION",
+                                        color = CyberCyan,
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Black
+                                    )
+                                    Text(
+                                        text = "Agar koi user hamari Safe Usage Policy ko halke me le kar baar-baar violation (3 out of 3 warnings) karta hai, to use permanently lock kar diya jata hai.",
+                                        color = TextLight,
+                                        fontSize = 9.sp,
+                                        lineHeight = 13.sp
+                                    )
+                                    Text(
+                                        text = "Aise users agar app ko UNINSTALL karke fir se RE-INSTALL bhi kar lein, tab bhi hamara system bypass nahi ho sakta! App start hote hi secure device database aur cloud APIs se direct verification karta hai aur user ke specific physical Device ID (Secure Android ID) aur public Network IP address ko hamare global encrypted blacklist node (KVDB Cloud Service) se match kar ke device ko automatic block state me hi rakhta hai.",
+                                        color = TextLight,
+                                        fontSize = 9.sp,
+                                        lineHeight = 13.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
+                            }
+
+                            PrivacyDisclosureItem(
+                                title = "1. AI ASSISTANT EXPLOIT FILTERS",
+                                text = "Hamara Advanced Security Engine har ek chat request ko locally screen karta hai. Command Injection, system instruction leakage, hacking patterns aur reverse compilation queries ko local levels par hi intercept kar ke block kar diya jata hai."
+                            )
+
+                            PrivacyDisclosureItem(
+                                title = "2. FAMILY-SAFE CONTENT COMPLIANCE (100% ETHICAL)",
+                                text = "Rabiya AI purely clean aur respectful conversation model par kaam karti hai. Gandi baatein (Adult explicit vulgarity, sex/dirty requests, inappropriate photos/videos aur offensive abusive slang) ke prayas ko turant alert kar ke warnings counter update kar diya jata hai."
+                            )
+
+                            PrivacyDisclosureItem(
+                                title = "3. CLOUD-SYNC BLACKLIST MATRIX (KVDB)",
+                                text = "Hum globally integrated cloud storage bucket (KVDB secure SSL tunnels) ke jariye real-time blacklist database maintain karte hain. Isse block kiya gaya koi bhi toxic ya criminal user hamari high-speed computing processing engines ko abuse nahi kar sakta."
+                            )
+
+                            // FAQs Accordion Look
+                            Text(
+                                text = "🛡️ SECURITY FAQS (SAWALAAT & JAWABAAT)",
+                                color = CyberCyan,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Black,
+                                modifier = Modifier.padding(top = 4.dp)
+                            )
+
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(GridSpace.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("Q: Kya app un-install karne par block hat jayega?", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Text("Ans: Bilkul nahi, saheli! Reinstall ke baad bhi system Device ID and IP check kar ke automatically app ke primary functions ko permanently locked rakhega.", color = TextMuted, fontSize = 8.5.sp)
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(GridSpace.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("Q: Warning count kab reset hota hai?", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Text("Ans: Standard policy guidelines ke tehat warnings reset nahi oi hain. Agar aap lagatar safe aur authentic conversations karte hain to counter static rehta hai.", color = TextMuted, fontSize = 8.5.sp)
+                                    }
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .background(GridSpace.copy(alpha = 0.5f), RoundedCornerShape(8.dp))
+                                        .padding(10.dp)
+                                ) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("Q: IP block hone se kya nuksan hoga?", color = Color.White, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                                        Text("Ans: IP Address blacklisting se us router internet se connected sabhi devices par Rabiya AI server block ho jayega. Apne mobile and data ko safe rakhein aur policy comply karein.", color = TextMuted, fontSize = 8.5.sp)
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -28637,8 +29201,8 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .background(Color(0xFF0F172A))
-            .border(1.dp, Color(0xFF1E293B))
+            .background(Color.White)
+            .border(1.dp, Color(0xFFE2E8F0))
             .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {

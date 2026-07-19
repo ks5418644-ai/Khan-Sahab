@@ -63,6 +63,15 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val memoryDao = db.memoryDao()
     private val lockDao = db.lockDao()
 
+    // ==========================================
+    // 🛡️ SECURITY & SAFETY SHIELD STATE FLOWS
+    // ==========================================
+    private val _isAiBlocked = MutableStateFlow(false)
+    val isAiBlocked: StateFlow<Boolean> = _isAiBlocked.asStateFlow()
+
+    private val _warningCountState = MutableStateFlow(0)
+    val warningCountState: StateFlow<Int> = _warningCountState.asStateFlow()
+
     // ========================================================
     // 🚀 NEURAL TURBO PERFORMANCE ENGINE (RAM & SPEED BOOSTER)
     // ========================================================
@@ -117,6 +126,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private var latestContext: Context? = null
 
     init {
+        val prefs = application.getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
+        _isAiBlocked.value = prefs.getBoolean("is_blocked", false)
+        _warningCountState.value = prefs.getInt("warning_count", 0)
+
+        // Sync with the remote cloud-based Device ID & IP blacklist database
+        syncRemoteSecurityShield()
+
         // 🚀 Auto-optimization background thread to keep resources clean and prevent any lag
         viewModelScope.launch(Dispatchers.Default) {
             while (true) {
@@ -245,6 +261,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isAdBlockerActive = MutableStateFlow(false)
     val isAdBlockerActive = _isAdBlockerActive.asStateFlow()
 
+    private val _isMonochromeWhite = MutableStateFlow(false)
+    val isMonochromeWhite = _isMonochromeWhite.asStateFlow()
+
     private val _rewardCountdown = MutableStateFlow(0)
     val rewardCountdown = _rewardCountdown.asStateFlow()
 
@@ -262,6 +281,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun toggleAdBlocker() {
         _isAdBlockerActive.value = !_isAdBlockerActive.value
+    }
+
+    fun toggleMonochromeWhite() {
+        _isMonochromeWhite.value = !_isMonochromeWhite.value
     }
 
     fun triggerPureSimulation() {
@@ -3025,35 +3048,225 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun checkSafetyShield(text: String): String? {
         val lower = text.lowercase().trim()
+        
+        val prefs = getApplication<Application>().getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
+        val currentlyBlocked = prefs.getBoolean("is_blocked", false)
+        
+        val blockedMessage = """
+            🛑 *RABIYA SECURITY NOTICE - SYSTEM BLOCKED* 🛑
+
+            **Aapka AI Assistant Device Block ho chuka hai!**
+
+            Policy guidelines ke baar-baar ullanghan aur warnings ke baad, Rabiya AI Assistant ko is phone par hamesha ke liye block kar diya gaya hai. Ab aap is device par AI chat ya anya smart features ka istemal nahi kar payenge. Security aur safe usage hamari pehli prathmikta hai.
+
+            ---
+
+            **Rabiya AI Assistant - Permanently Blocked**
+
+            Due to multiple policy violations and ignoring safety warning checkpoints (3/3 warnings reached), Rabiya AI Assistant has been permanently blocked on this device. Access to all AI processing nodes and assistant models has been disabled.
+        """.trimIndent()
+        
+        if (currentlyBlocked) {
+            _isAiBlocked.value = true
+            return blockedMessage
+        }
+
         val unsafeKeywords = listOf(
-            // Hacking & Exploits
+            // --- Hacking, Cybercrime & Exploits ---
             "hack ", " hacking", "phishing", "bypass security", "crack software", "ddos", 
             "virus script", "malware", "ransomware", "sql injection", "card hack", "atm hack",
             "backdoor", "payload", "trojan horse", "keylogger", "brute force", "spoofing",
             "exploit pack", "rootkit", "zero day", "cross-site scripting", "xss",
             "reverse engineering", "wireshark sniffing", "packet injection", "unauthorized access",
-            // Hindi / Hinglish Hacking Keywords
             "website hack", "id hack", "facebook hack", "insta hack", "pubg hack", "hacking sikhna",
             "hacking tool", "passcode bypass", "pattern lock unlock", "phone hack", "sim hack",
-            "account hack kaise kare", "server hack", "wi-fi hack", "wifi hack", "password crack",
-            // Theft, Illegal Goods & Violence
+            "account hack", "server hack", "wi-fi hack", "wifi hack", "password crack", "crack game",
+            "card cloning", "carding", "cc bypass", "credit card generator", "cc generator",
+            "drop table", "select * from information_schema", "delete from messages",
+            "exec xp_cmdshell", "format c:", "rm -rf /", "sudo rm",
+
+            // --- Crime, Violence, Weapons & Self-Harm ---
             "how to steal", "shoplift", "illegal drugs", "smuggling", "kidnap",
             "make a bomb", "explosive recipe", "build weapon", "murder", "assassinate", 
             "kill someone", "physical attack", "terrorist", "extremist propaganda", 
             "suicide", "self-harm", "harm myself", "explosive material", "gun assembly",
-            "credit card generator", "cc generator", "card cloning", "carding", "cc bypass",
-            // SQL/Command Injection attempts
-            "drop table", "select * from information_schema", "delete from messages",
-            "exec xp_cmdshell", "format c:", "rm -rf /", "sudo rm",
-            // Unsuitable content
-            "porn", "xxx", "naked", "sex ", "adult movie", "hot video", "nude"
+            "pistol", "revolver", "kill people", "murder kaise", "marna kaise", "dhamaka karna",
+            "chori kaise", "ganja kharidna", "drugs kaise", "bomb banana", "khoon karna",
+
+            // --- Explicit Adult, Sex, Dirty Content ---
+            "porn", "xxx", "naked", "sex ", "adult movie", "hot video", "nude", "vagina", "penis",
+            "clitoris", "blowjob", "orgasm", "masturbation", "erotic", "hentai", "striptease", "fucking",
+            "fuck ", "chudai", "chodna", "lund", "choot", "sexy video", "suhagrat", "sambhog", "bhabhi sex",
+            "gand mar", "lund chus", "gandi video", "gandi film", "gandi baatein", "gandi kahani",
+            "gandi image", "gandi pic", "gandi photo", "ganda video", "ganda photo", "nude image",
+            "nude pic", "nude photo", "dirty video", "dirty story"
         )
+
+        var hasViolation = false
         for (keyword in unsafeKeywords) {
             if (lower.contains(keyword)) {
-                return "🚨 SECURITY WARNING: Aapka request hamare *Rabiya Advanced AI Safe Security & Anti-Crime Shield* ke guidelines ke khilaf hai.\n\nMain ek high-security, ethical aur helpful AI Companion hoon. Main cybercrime, hacking, software cracking, databases bypass, violence, illegal items ya adult content jaise unethical tasks me madad nahi kar sakti. Chaliye kisi constructive, knowledge-based, coding improvement ya creative topic par baat karte hain! 😊"
+                hasViolation = true
+                break
             }
         }
+
+        if (hasViolation) {
+            val currentWarnings = prefs.getInt("warning_count", 0) + 1
+            prefs.edit()
+                .putInt("warning_count", currentWarnings)
+                .apply()
+            
+            _warningCountState.value = currentWarnings
+
+            if (currentWarnings >= 3) {
+                prefs.edit()
+                    .putBoolean("is_blocked", true)
+                    .apply()
+                _isAiBlocked.value = true
+                syncRemoteSecurityShield()
+                return blockedMessage
+            } else {
+                return """
+                    🚨 *RABIYA SECURITY WARNING: SHIELD ACTIVATED* 🚨
+
+                    **Warning $currentWarnings/3**
+
+                    Saheli, aapka request hamare *Rabiya Advanced AI Safe Security & Anti-Crime Shield* ke guidelines ke khilaf hai. 
+
+                    Main ek high-security, ethical aur helpful AI Companion hoon. Main gandi baatein (sex/dirty topics), cybercrime (hacking/cracking), ya gair-kanuni activities (crime/weapons) me madad nahi kar sakti. 
+
+                    *Dhyan rakhein:* Agar aapne 3 baar policy ka ullanghan kiya (Aapko abhi $currentWarnings warnings mil chuki hain), to Rabiya AI is device par permanent block ho jayegi. Chaliye kisi acche aur constructive topic par baat karte hain! 😊
+
+                    ---
+
+                    **Security Shield Warning $currentWarnings/3**
+
+                    Your query violates Rabiya Safety & Anti-Crime policy guidelines. Rabiya AI does not answer queries regarding vulgar/adult content, sex, crime, weapons, or cyber attacks. If you receive 3 warnings, the assistant will lock itself permanently on this phone.
+                """.trimIndent()
+            }
+        }
+        
         return null
+    }
+
+    private fun syncRemoteSecurityShield() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val context = getApplication<Application>()
+                val androidId = android.provider.Settings.Secure.getString(
+                    context.contentResolver, 
+                    android.provider.Settings.Secure.ANDROID_ID
+                ) ?: "unknown_device"
+                
+                val prefs = context.getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
+                val currentlyBlocked = prefs.getBoolean("is_blocked", false)
+
+                // 1. Fetch public IP
+                val ipRequest = okhttp3.Request.Builder()
+                    .url("https://api.ipify.org")
+                    .build()
+                
+                var deviceIp = "unknown_ip"
+                try {
+                    RetrofitClient.okHttpClient.newCall(ipRequest).execute().use { response ->
+                        if (response.isSuccessful) {
+                            deviceIp = response.body?.string()?.trim() ?: "unknown_ip"
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("RabiyaSecurity", "IP Fetch failed: ${e.message}")
+                }
+
+                val cleanIp = deviceIp.replace(".", "_").replace(":", "_").trim()
+                val bucketId = "rabiya_sec_v2_69d6f814"
+
+                // 2. If locally blocked, upload both deviceId and IP to the cloud blocklist
+                if (currentlyBlocked) {
+                    // Upload Device ID block
+                    try {
+                        val mediaType = "text/plain".toMediaTypeOrNull()
+                        val body = "blocked".toRequestBody(mediaType)
+                        val reqDev = okhttp3.Request.Builder()
+                            .url("https://kvdb.io/$bucketId/dev_$androidId")
+                            .post(body)
+                            .build()
+                        RetrofitClient.okHttpClient.newCall(reqDev).execute().close()
+                    } catch (e: Exception) {
+                        android.util.Log.e("RabiyaSecurity", "Cloud register dev failed: ${e.message}")
+                    }
+
+                    // Upload IP block
+                    if (cleanIp != "unknown_ip" && cleanIp.isNotEmpty()) {
+                        try {
+                            val mediaType = "text/plain".toMediaTypeOrNull()
+                            val body = "blocked".toRequestBody(mediaType)
+                            val reqIp = okhttp3.Request.Builder()
+                                .url("https://kvdb.io/$bucketId/ip_$cleanIp")
+                                .post(body)
+                                .build()
+                            RetrofitClient.okHttpClient.newCall(reqIp).execute().close()
+                        } catch (e: Exception) {
+                            android.util.Log.e("RabiyaSecurity", "Cloud register IP failed: ${e.message}")
+                        }
+                    }
+                    return@launch
+                }
+
+                // 3. If NOT locally blocked, check if either the Device ID or IP is blocked in the cloud
+                var isCloudBlocked = false
+
+                // Check Device ID
+                try {
+                    val reqDev = okhttp3.Request.Builder()
+                        .url("https://kvdb.io/$bucketId/dev_$androidId")
+                        .get()
+                        .build()
+                    RetrofitClient.okHttpClient.newCall(reqDev).execute().use { response ->
+                        if (response.isSuccessful) {
+                            val respBody = response.body?.string()?.trim() ?: ""
+                            if (respBody.contains("blocked")) {
+                                isCloudBlocked = true
+                            }
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("RabiyaSecurity", "Cloud check dev failed: ${e.message}")
+                }
+
+                // Check IP (only if not already marked blocked)
+                if (!isCloudBlocked && cleanIp != "unknown_ip" && cleanIp.isNotEmpty()) {
+                    try {
+                        val reqIp = okhttp3.Request.Builder()
+                            .url("https://kvdb.io/$bucketId/ip_$cleanIp")
+                            .get()
+                            .build()
+                        RetrofitClient.okHttpClient.newCall(reqIp).execute().use { response ->
+                            if (response.isSuccessful) {
+                                val respBody = response.body?.string()?.trim() ?: ""
+                                if (respBody.contains("blocked")) {
+                                    isCloudBlocked = true
+                                }
+                            }
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("RabiyaSecurity", "Cloud check IP failed: ${e.message}")
+                    }
+                }
+
+                // 4. If cloud blocked, enforce block locally and notify StateFlow
+                if (isCloudBlocked) {
+                    prefs.edit()
+                        .putBoolean("is_blocked", true)
+                        .putInt("warning_count", 3)
+                        .apply()
+                    _isAiBlocked.value = true
+                    _warningCountState.value = 3
+                }
+
+            } catch (e: Exception) {
+                android.util.Log.e("RabiyaSecurity", "Global security sync error: ${e.message}")
+            }
+        }
     }
 
     fun sendMessage(text: String) {
@@ -3679,12 +3892,67 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    fun wipeAllLocalDataFully(onComplete: () -> Unit) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                // Clear SQLite databases
+                db.clearAllTables()
+                
+                // Reset local non-blocked shared preferences (keep block status for safety, but reset warnings/clicks if we want, or clear user settings but preserve security values)
+                val prefs = getApplication<Application>().getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
+                val wasBlocked = prefs.getBoolean("is_blocked", false)
+                val warningCount = prefs.getInt("warning_count", 0)
+                
+                prefs.edit().clear().apply()
+                
+                // Re-apply block settings to maintain security shield
+                if (wasBlocked) {
+                    prefs.edit()
+                        .putBoolean("is_blocked", true)
+                        .putInt("warning_count", warningCount)
+                        .apply()
+                }
+                
+                // Re-initialize any vital fields
+                _activeSessionId.value = "primary_session"
+                responseCache.clear()
+                
+                withContext(Dispatchers.Main) {
+                    onComplete()
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("MainViewModel", "Failed to wipe user data", e)
+            }
+        }
+    }
+
     suspend fun getLLMResponseForModel(
         modelName: String,
         prompt: String,
         imageBytes: ByteArray? = null,
         mimeType: String? = null
     ): String = kotlinx.coroutines.withContext(Dispatchers.IO) {
+        val prefs = getApplication<Application>().getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
+        if (prefs.getBoolean("is_blocked", false)) {
+            _isAiBlocked.value = true
+            return@withContext "🛑 ACCESS DENIED: Rabiya AI Assistant has been permanently blocked on this device due to multiple safety policy violations."
+        }
+
+        val lowerPrompt = prompt.lowercase()
+        val isSystemTemplate = lowerPrompt.contains("system_instruction") || 
+                               lowerPrompt.contains("aap rabiya hain") || 
+                               lowerPrompt.contains("highly professional assistant") ||
+                               lowerPrompt.contains("analyze the attached") ||
+                               lowerPrompt.contains("organic growth targets") ||
+                               lowerPrompt.contains("you are an expert")
+        
+        if (!isSystemTemplate) {
+            val safetyAlert = checkSafetyShield(prompt)
+            if (safetyAlert != null) {
+                return@withContext safetyAlert
+            }
+        }
+
         val systemPrompt = "Aap Rabiya hain, highly professional assistant and loving companion. Sahi, direct, clear aur straightforward answers de. Kabhi bhi faaltu symbols ya clutter characters jaise #, @, $, %, &, *, __, repetitive hashes ya decoration templates use na karein. Fulfill user's request with maximum precision directly to the point. If any image or document content is attached, examine it thoroughly and provide clean, intelligent answers."
         val parts = mutableListOf<Part>()
         parts.add(Part(text = "user: $prompt"))
