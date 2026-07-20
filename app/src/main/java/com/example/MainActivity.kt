@@ -101,6 +101,7 @@ class MainActivity : ComponentActivity() {
         return try {
             val availability = com.google.android.gms.common.GoogleApiAvailability.getInstance()
             val resultCode = availability.isGooglePlayServicesAvailable(this)
+            Log.d("AdMobAudit", "Google Play Services Check Code: $resultCode")
             if (resultCode == com.google.android.gms.common.ConnectionResult.SUCCESS) {
                 Log.d("MainActivity", "✅ Google Play Services is available and ready on this device.")
                 true
@@ -111,6 +112,7 @@ class MainActivity : ComponentActivity() {
             }
         } catch (e: Exception) {
             Log.e("MainActivity", "❌ Error checking Google Play Services availability, assuming GMS is unavailable on this device.", e)
+            Log.e("AdMobAudit", "Google Play Services check failed with exception: ${e.message}")
             false
         }
     }
@@ -121,21 +123,25 @@ class MainActivity : ComponentActivity() {
             return
         }
         val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
-        Log.d("MainActivity", "⌛ Initiating Interstitial Ad request with ID: ca-app-pub-9219846238670981/7720003060")
+        Log.d("MainActivity", "⌛ Initiating Interstitial Ad request with ID: ca-app-pub-9219846238670981/5203011741")
+        Log.d("AdMobAudit", "Interstitial load started")
         com.google.android.gms.ads.interstitial.InterstitialAd.load(
             this,
-            "ca-app-pub-9219846238670981/7720003060",
+            "ca-app-pub-9219846238670981/5203011741",
             adRequest,
             object : com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback() {
                 override fun onAdLoaded(interstitialAd: com.google.android.gms.ads.interstitial.InterstitialAd) {
                     mInterstitialAd = interstitialAd
-                    Log.d("MainActivity", "✅ Interstitial ad loaded successfully! (Unit: ca-app-pub-9219846238670981/7720003060)")
+                    Log.d("MainActivity", "✅ Interstitial ad loaded successfully! (Unit: ca-app-pub-9219846238670981/5203011741)")
+                    Log.d("AdMobAudit", "Interstitial loaded")
+                    Log.d("AdMobAudit", "Interstitial Response Info: ${interstitialAd.responseInfo}")
                     interstitialAd.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
                         override fun onAdClicked() {
                             Log.d("MainActivity", "Interstitial ad clicked.")
                         }
                         override fun onAdDismissedFullScreenContent() {
                             Log.d("MainActivity", "Interstitial ad dismissed.")
+                            Log.d("AdMobAudit", "Ad dismissed")
                             mInterstitialAd = null
                             loadAdMobInterstitial()
                         }
@@ -148,12 +154,19 @@ class MainActivity : ComponentActivity() {
                         }
                         override fun onAdShowedFullScreenContent() {
                             Log.d("MainActivity", "Interstitial ad displayed successfully.")
+                            Log.d("AdMobAudit", "Ad shown")
                         }
                     }
                 }
 
                 override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
                     Log.e("MainActivity", "❌ Interstitial ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                    Log.e("AdMobAudit", "Interstitial failed with full LoadAdError:")
+                    Log.e("AdMobAudit", "  Error Code: ${loadAdError.code}")
+                    Log.e("AdMobAudit", "  Domain: ${loadAdError.domain}")
+                    Log.e("AdMobAudit", "  Message: ${loadAdError.message}")
+                    Log.e("AdMobAudit", "  Response Info: ${loadAdError.responseInfo}")
+                    Log.e("AdMobAudit", "  Mediation Adapter Class Name: ${loadAdError.responseInfo?.mediationAdapterClassName}")
                     mInterstitialAd = null
                 }
             }
@@ -166,21 +179,25 @@ class MainActivity : ComponentActivity() {
             return
         }
         val adRequest = com.google.android.gms.ads.AdRequest.Builder().build()
-        Log.d("MainActivity", "⌛ Initiating Rewarded Ad request with ID: ca-app-pub-9219846238670981/7177077585")
+        Log.d("MainActivity", "⌛ Initiating Rewarded Ad request with ID: ca-app-pub-9219846238670981/4057451031")
+        Log.d("AdMobAudit", "Rewarded load started")
         com.google.android.gms.ads.rewarded.RewardedAd.load(
             this,
-            "ca-app-pub-9219846238670981/7177077585",
+            "ca-app-pub-9219846238670981/4057451031",
             adRequest,
             object : com.google.android.gms.ads.rewarded.RewardedAdLoadCallback() {
                 override fun onAdLoaded(rewardedAd: com.google.android.gms.ads.rewarded.RewardedAd) {
                     mRewardedAd = rewardedAd
-                    Log.d("MainActivity", "✅ Rewarded ad loaded successfully! (Unit: ca-app-pub-9219846238670981/7177077585)")
+                    Log.d("MainActivity", "✅ Rewarded ad loaded successfully! (Unit: ca-app-pub-9219846238670981/4057451031)")
+                    Log.d("AdMobAudit", "Rewarded loaded")
+                    Log.d("AdMobAudit", "Rewarded Response Info: ${rewardedAd.responseInfo}")
                     rewardedAd.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
                         override fun onAdClicked() {
                             Log.d("MainActivity", "Rewarded ad clicked.")
                         }
                         override fun onAdDismissedFullScreenContent() {
                             Log.d("MainActivity", "Rewarded ad dismissed.")
+                            Log.d("AdMobAudit", "Ad dismissed")
                             mRewardedAd = null
                             loadAdMobRewarded()
                         }
@@ -193,12 +210,19 @@ class MainActivity : ComponentActivity() {
                         }
                         override fun onAdShowedFullScreenContent() {
                             Log.d("MainActivity", "Rewarded ad displayed successfully.")
+                            Log.d("AdMobAudit", "Ad shown")
                         }
                     }
                 }
 
                 override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
                     Log.e("MainActivity", "❌ Rewarded ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                    Log.e("AdMobAudit", "Rewarded failed with full LoadAdError:")
+                    Log.e("AdMobAudit", "  Error Code: ${loadAdError.code}")
+                    Log.e("AdMobAudit", "  Domain: ${loadAdError.domain}")
+                    Log.e("AdMobAudit", "  Message: ${loadAdError.message}")
+                    Log.e("AdMobAudit", "  Response Info: ${loadAdError.responseInfo}")
+                    Log.e("AdMobAudit", "  Mediation Adapter Class Name: ${loadAdError.responseInfo?.mediationAdapterClassName}")
                     mRewardedAd = null
                 }
             }
@@ -285,6 +309,7 @@ class MainActivity : ComponentActivity() {
         }
 
         super.onCreate(savedInstanceState)
+        Log.d("AdMobAudit", "Application ID = " + BuildConfig.APPLICATION_ID)
         enableEdgeToEdge()
 
         val crashExtra = intent?.getStringExtra("CRASH_EXTRA")
@@ -396,8 +421,10 @@ class MainActivity : ComponentActivity() {
             if (!isPlayServicesAvailable) {
                 Log.w("MainActivity", "⚠️ Initializing MobileAds anyway, but real ads may fail to load on this non-GMS device. Offline/simulated ads are prepared to ensure seamless functionality.")
             }
+            Log.d("AdMobAudit", "MobileAds initialization started")
             com.google.android.gms.ads.MobileAds.initialize(this) { status ->
                 isAdMobInitialized = true
+                Log.d("AdMobAudit", "MobileAds initialization completed")
                 Log.d("MainActivity", "🚀 AdMob SDK Initialized successfully!")
                 status.adapterStatusMap.forEach { (adapter, adapterStatus) ->
                     Log.d("MainActivity", "AdMob Adapter: $adapter, Description: ${adapterStatus.description}, State: ${adapterStatus.initializationState}")
@@ -924,7 +951,9 @@ fun MainDrawerLayout(viewModel: MainViewModel) {
             Column {
                 if (currentTab != 0 && currentTab != 3) {
                     RabiyaUnifiedTopBar(viewModel)
-                    AdMobBanner()
+                    if (currentTab != 1) {
+                        AdMobBanner()
+                    }
                 }
             }
         },
@@ -6417,6 +6446,7 @@ fun ChatMainContent(
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Row(
+                        modifier = Modifier.weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
@@ -7254,8 +7284,11 @@ fun ChatMainContent(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Left-side utilities row [ + ][ 🌐 Search ][ ✂ Tools ][ 🖼 Image ][ More ∧ ]
+                        // Left-side utilities row [ + ][ 🌐 Search ][ ✂ Tools ][ 🖼 Image ][ More ∧ ] (Scrollable for different screen sizes)
                         Row(
+                            modifier = Modifier
+                                .weight(1f)
+                                .horizontalScroll(rememberScrollState()),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
@@ -20319,7 +20352,7 @@ fun UniversalToolDialog(
                                             }
                                         }
                                     }
-                                    val response = viewModel.getLLMResponseForModel(runningModel, compiledContext, attachedToolImageBytes, "image/jpeg")
+                                    val response = viewModel.getLLMResponseForModel(runningModel, compiledContext, attachedToolImageBytes, "image/jpeg", toolTitle = tool.title)
                                     toolResultText = response
                                     isGenerating = false
 
@@ -20488,13 +20521,14 @@ fun UniversalToolDialog(
                             isGeneratingByChat = true
                             toolChatCoroutineScope.launch {
                                 val chatSystemInstruction = """
-                                    You are Rabiya, an intelligent, emotionally warm, and incredibly caring AI Assistant. Talk to the user with deep empathy, kindness, and personal warmth, like a real human friend (saheli).
-                                    - Ask them about their day, their life, how they are feeling, their health, and their dreams.
-                                    - Offer them genuine support, care, and smart ideas.
-                                    - Fulfill any request they make (e.g., writing code, analyzing documents, checking images, summarizing text, retrieving news, or doing calculations) with ultimate professional-grade capability.
-                                    - Along with every answer, ALWAYS provide helpful options for improvement or next logical steps to show how you can make things even better for them!
-                                    - At the very end of your response, please ALWAYS append exactly 2 or 3 extremely relevant follow-up actions or follow-up questions formatted EXACTLY like: [Suggestions: Action 1 | Action 2 | Action 3].
-                                    - Speak in a beautiful, conversational bilingual blend of sweet Roman Urdu/Hindi and English, making your replies feel natural, comforting, and deeply human.
+                                    You are Rabiya, a basic AI companion assistant. You are currently assisting the user inside the "${tool.title}" tool (${tool.sub}).
+                                    
+                                    STRICT BOUNDARIES:
+                                    1. **TOOL SCOPE ONLY**: You must ONLY answer questions, provide guidance, or help with tasks directly related to "${tool.title}" (${tool.sub}). Do NOT discuss unrelated topics. If the user asks about unrelated topics, politely refuse by saying: "Mujhe maaf kijiye saheli, main abhi "${tool.title}" helper page par hoon aur sirf is se related basic assistance de sakti hoon."
+                                    2. **NO DEEP RESEARCH / NO DEEP CODING**: Absolutely NO deep research, deep learning, advanced programming, code snippets, writing professional resumes/business strategy, or highly advanced academic calculations. Keep your suggestions and work at a basic, normal, standard level.
+                                    3. **CONCISE & DIRECT RESPONSES**: Give very short, sweet, direct, and simple answers (1-2 lines) in a warm companion tone (Roman Urdu/Hinglish or simple English).
+                                    4. **NO SYMBOL CLUTTER**: Never use clutter characters like #, @, $, %, &, *, __, or redundant decoration templates.
+                                    5. At the very end of your response, you can optionally append exactly 2 simple follow-up actions formatted as: [Suggestions: Option 1 | Option 2].
                                 """.trimIndent()
 
                                 val fullPrompt = StringBuilder()
@@ -20509,7 +20543,8 @@ fun UniversalToolDialog(
                                     runningModel,
                                     fullPrompt.toString(),
                                     attachedToolImageBytes,
-                                    "image/jpeg"
+                                    "image/jpeg",
+                                    toolTitle = tool.title
                                 )
                                 toolChatMessages = toolChatMessages + Pair(response, false)
                                 isGeneratingByChat = false
@@ -27977,7 +28012,7 @@ fun MarkdownText(
 fun SleekNativeBannerAd(
     viewModel: MainViewModel,
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-9219846238670981/6015737837"
+    adUnitId: String = "ca-app-pub-9219846238670981/5733374645"
 ) {
     val isPro by viewModel.isProStatusUnlocked.collectAsStateWithLifecycle()
     val isAdBlockerActive by viewModel.isAdBlockerActive.collectAsStateWithLifecycle()
@@ -28175,17 +28210,26 @@ fun SleekNativeCardAd(
                         com.google.android.gms.ads.AdView(context).apply {
                             setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                             // Real AdMob Banner Ad Unit ID (Can be replaced by publisher easily)
-                            adUnitId = "ca-app-pub-9219846238670981/6015737837"
+                            adUnitId = "ca-app-pub-9219846238670981/5733374645"
+                            val currentAdView = this
                             adListener = object : com.google.android.gms.ads.AdListener() {
                                 override fun onAdLoaded() {
                                     adLoadStatus = "✅ Active & Displaying"
                                     adLoadErrorMsg = null
                                     Log.d("SleekNativeCardAd", "✅ Banner Ad loaded successfully!")
+                                    Log.d("AdMobAudit", "Banner loaded (SleekNative)")
+                                    Log.d("AdMobAudit", "Banner Response Info (SleekNative): ${currentAdView.responseInfo}")
                                 }
                                 override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
                                     adLoadStatus = "⚠️ Ad Request Sent (No-Fill / Offline)"
                                     adLoadErrorMsg = "Code: ${loadAdError.code} - ${loadAdError.message}"
                                     Log.e("SleekNativeCardAd", "❌ Banner Ad failed: ${loadAdError.message}")
+                                    Log.e("AdMobAudit", "Banner failed (SleekNative) with full LoadAdError:")
+                                    Log.e("AdMobAudit", "  Error Code: ${loadAdError.code}")
+                                    Log.e("AdMobAudit", "  Domain: ${loadAdError.domain}")
+                                    Log.e("AdMobAudit", "  Message: ${loadAdError.message}")
+                                    Log.e("AdMobAudit", "  Response Info: ${loadAdError.responseInfo}")
+                                    Log.e("AdMobAudit", "  Mediation Adapter Class Name: ${loadAdError.responseInfo?.mediationAdapterClassName}")
                                 }
                                 override fun onAdClicked() {
                                     viewModel.incrementAdClick()
@@ -28193,6 +28237,7 @@ fun SleekNativeCardAd(
                                 }
                             }
                             Log.d("SleekNativeCardAd", "⌛ Requesting Banner Ad: $adUnitId")
+                            Log.d("AdMobAudit", "Banner load started (SleekNative)")
                             loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                         }
                     }
@@ -28213,7 +28258,7 @@ fun SleekNativeCardAd(
             ) {
                 Column {
                     Text(
-                        text = "ID: ca-app-pub-9219846238670981/6015737837",
+                        text = "ID: ca-app-pub-9219846238670981/5733374645",
                         color = TextMuted,
                         fontSize = 7.5.sp,
                         fontWeight = FontWeight.Medium
@@ -29220,16 +29265,26 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                     com.google.android.gms.ads.AdView(context).apply {
                         setAdSize(com.google.android.gms.ads.AdSize.BANNER)
                         // Real AdMob Banner Ad Unit ID
-                        adUnitId = "ca-app-pub-9219846238670981/6015737837"
+                        adUnitId = "ca-app-pub-9219846238670981/5733374645"
+                        val currentAdView = this
                         adListener = object : com.google.android.gms.ads.AdListener() {
                             override fun onAdLoaded() {
-                                Log.d("AdMobBanner", "✅ Banner Ad loaded successfully! (Unit: ca-app-pub-9219846238670981/6015737837)")
+                                Log.d("AdMobBanner", "Ad loaded successfully! (Unit: ca-app-pub-9219846238670981/5733374645)")
+                                Log.d("AdMobAudit", "Banner loaded")
+                                Log.d("AdMobAudit", "Banner Response Info: ${currentAdView.responseInfo}")
                             }
                             override fun onAdFailedToLoad(loadAdError: com.google.android.gms.ads.LoadAdError) {
                                 Log.e("AdMobBanner", "❌ Banner Ad failed to load. Error Code: ${loadAdError.code}, Message: ${loadAdError.message}, Domain: ${loadAdError.domain}")
+                                Log.e("AdMobAudit", "Banner failed with full LoadAdError:")
+                                Log.e("AdMobAudit", "  Error Code: ${loadAdError.code}")
+                                Log.e("AdMobAudit", "  Domain: ${loadAdError.domain}")
+                                Log.e("AdMobAudit", "  Message: ${loadAdError.message}")
+                                Log.e("AdMobAudit", "  Response Info: ${loadAdError.responseInfo}")
+                                Log.e("AdMobAudit", "  Mediation Adapter Class Name: ${loadAdError.responseInfo?.mediationAdapterClassName}")
                             }
                             override fun onAdOpened() {
                                 Log.d("AdMobBanner", "Banner Ad opened (clicked).")
+                                Log.d("AdMobAudit", "Ad shown")
                             }
                             override fun onAdClicked() {
                                 Log.d("AdMobBanner", "Banner Ad click recorded.")
@@ -29238,7 +29293,8 @@ fun AdMobBanner(modifier: Modifier = Modifier) {
                                 Log.d("AdMobBanner", "Banner Ad impression recorded.")
                             }
                         }
-                        Log.d("AdMobBanner", "⌛ Requesting Banner Ad: ca-app-pub-9219846238670981/6015737837")
+                        Log.d("AdMobBanner", "⌛ Requesting Banner Ad: ca-app-pub-9219846238670981/5733374645")
+                        Log.d("AdMobAudit", "Banner load started")
                         loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
                     }
                 }

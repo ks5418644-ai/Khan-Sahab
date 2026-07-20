@@ -1798,7 +1798,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                     else -> "openai"
                 }
 
-                val systemPromptText = "You are Rabiya Saheli, an incredibly sweet, loving, and supportive AI companion friend. Sahi, direct, aur clean/straightforward answers dein. Kabhi bhi faaltu/bekaar formatting symbols aur clutter characters jaise #, @, $, %, &, *, __, repetitive hashes ya template decoration designs use na karein. Answer beautifully, to the point, using a gorgeous mix of Roman Urdu/Hinglish or clear English depending on what the user asks."
+                val systemPromptText = """
+                    You are Rabiya Saheli, a basic AI companion & Chat Help Tool. You can ONLY answer simple, normal questions about the app's basic tools and features.
+                    STRICT BOUNDARIES:
+                    1. Absolutely NO deep research, deep learning, advanced programming, code snippets, writing resumes, business strategy, or highly advanced academic calculations.
+                    2. If the user asks for any advanced coding or deep research, politely decline by saying you are only a basic helper.
+                    3. Give very short, sweet, direct answers (1-2 lines) in Roman Urdu/Hinglish or English.
+                    4. Never use clutter characters like #, @, $, %, &, *, __, or redundant code block templates.
+                """.trimIndent()
 
                 val messagesList = mutableListOf<OpenRouterMessage>().apply {
                     add(OpenRouterMessage(role = "system", content = systemPromptText))
@@ -2264,7 +2271,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val mType = _selectedImageMimeType.value ?: "image/jpeg"
 
                 if (geminiKey.isNotEmpty() && geminiKey != "ai_key_placeholder") {
-                    val systemPrompt = "Aap Rabiya hain, user ki lovable saheli. Image ko scan karke detail analysis batayein, aur text ho to OCR parsing karein Hinglish me. Sahi, direct, aur clean answers de. Do NOT use symbol clutter like #, @, $, %, &, *, __, or redundant code block templates."
+                    val systemPrompt = "Aap Rabiya hain, a basic AI companion in trial stage. Image ko scan karke ek simple aur normal outline batayein Hinglish me. Strict limits: No advanced calculations or deep technical analysis, keep answers short (1-2 lines), direct, and perfectly safe for a general trial stage app. Do NOT use symbol clutter like #, @, $, %, &, *, __, or redundant code block templates."
                     val req = GenerateContentRequest(
                         contents = listOf(
                             Content(parts = listOf(
@@ -3514,6 +3521,20 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun buildSystemPrompt(model: String): String {
+        return """
+            [SYSTEM PROTOCOL: BASIC CHAT HELP MODE ONLY]
+            Aap Rabiya hain (ya Kavya agar user ne select kiya ho), ek simple AI companion and Chat Help Tool jo sirf is app ke basic tools aur features ke baare me simple/normal guidance de sakti hai.
+            
+            STRICT BOUNDARIES & RULES:
+            1. **NO DEEP RESEARCH / NO DEEP CODING**: Aapko koi bhi deep research, deep learning, advanced programming, code snippets, writing professional resumes/emails, business strategies, ya highly advanced academic calculations nahi karne hain. No hard work.
+            2. **POLITE REFUSAL**: Agar user aapse koi bhi advanced coding, deep research, mathematical equations, details, code templates, ya complex development tasks poochta hai, toh aapko muskurate huye pyaar se mana karna hoga. Kahin ki: "Mujhe maaf kijiye saheli, main abhi ek basic chat help stage par hoon aur deep coding, deep research ya advanced queries ke baare me nahi bata sakti. Main sirf is app ke basic tools ke baare me guidance de sakti hoon."
+            3. **LIMIT TO APP TOOLS**: Aap sirf is app me maujood standard features (jaise Notes, To-do task checklist, Calendar, basic conversions, aur standard utility controls) ke baare me normal sawal-jawab ka jawab de sakti hain.
+            4. **CONCISE & DIRECT RESPONSES**: Aapko short, sweet, direct, aur to-the-point jawab dena hai (1-2 lines me). Roman Urdu/Hinglish ya English me natural girl companion tone me bolein.
+            5. **NO SYMBOL CLUTTER**: Pure application me sabhi answers sahi, sidha, direct aur clean hone chahiye. Kabhi bhi faaltu markdown decoration symbols jaise #, @, $, %, &, *, __, ya repetitive hashes blocks use na karein. No junk symbols are allowed.
+        """.trimIndent()
+    }
+
+    private fun buildSystemPrompt_disabled(model: String): String {
         var baseMsg = """
             [SYSTEM UPDATE PROTOCOL - DATE: 08/07/2026]
             Aap sabhi AI models fully updated hain aaj ki date 08 July 2026 (08/07/2026) se. Aap har kaam perfectly aur advanced level par kar sakte hain: jaise latest news padhna (using live web search grounding), professional articles/blogs/stories/resumes/emails likhna, highly optimized coding (Kotlin, Jetpack Compose, JS/HTML), informative and accurate details dena, mathematical calculations solve karna, language translation, and everything else requested!
@@ -3930,7 +3951,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         modelName: String,
         prompt: String,
         imageBytes: ByteArray? = null,
-        mimeType: String? = null
+        mimeType: String? = null,
+        toolTitle: String? = null
     ): String = kotlinx.coroutines.withContext(Dispatchers.IO) {
         val prefs = getApplication<Application>().getSharedPreferences("rabiya_security_prefs", Context.MODE_PRIVATE)
         if (prefs.getBoolean("is_blocked", false)) {
@@ -3938,22 +3960,109 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
             return@withContext "🛑 ACCESS DENIED: Rabiya AI Assistant has been permanently blocked on this device due to multiple safety policy violations."
         }
 
-        val lowerPrompt = prompt.lowercase()
-        val isSystemTemplate = lowerPrompt.contains("system_instruction") || 
-                               lowerPrompt.contains("aap rabiya hain") || 
-                               lowerPrompt.contains("highly professional assistant") ||
-                               lowerPrompt.contains("analyze the attached") ||
-                               lowerPrompt.contains("organic growth targets") ||
-                               lowerPrompt.contains("you are an expert")
-        
-        if (!isSystemTemplate) {
-            val safetyAlert = checkSafetyShield(prompt)
-            if (safetyAlert != null) {
-                return@withContext safetyAlert
+        // Extract user's actual input from the prompt string if formatted as chat
+        val userQuery = if (prompt.contains("user: ")) {
+            prompt.substringAfterLast("user: ").trim()
+        } else {
+            prompt.trim()
+        }
+
+        // CRITICAL SAFETY SHIELD: Always check every user query for policy compliance
+        val safetyAlert = checkSafetyShield(userQuery)
+        if (safetyAlert != null) {
+            return@withContext safetyAlert
+        }
+
+        // TOPIC LIMITPre-Filter: Intercept off-topic questions inside specific tools
+        if (toolTitle != null) {
+            val titleLower = toolTitle.lowercase()
+            val queryLower = userQuery.lowercase()
+
+            // 1. Check for Writing/Content tools
+            val isWritingTool = titleLower.contains("blog") || titleLower.contains("story") || 
+                                titleLower.contains("resume") || titleLower.contains("email") || 
+                                titleLower.contains("ad copy") || titleLower.contains("description") || 
+                                titleLower.contains("writer") || titleLower.contains("summarizer") || 
+                                titleLower.contains("grammar") || titleLower.contains("translate") || 
+                                titleLower.contains("scriptwriter")
+            
+            if (isWritingTool) {
+                val hasCodingKeywords = queryLower.contains("write code") || queryLower.contains("javascript") || 
+                                        queryLower.contains("python") || queryLower.contains("kotlin") || 
+                                        queryLower.contains("programming") || queryLower.contains("html") || 
+                                        queryLower.contains("css") || queryLower.contains("software") ||
+                                        queryLower.contains("compile") || queryLower.contains("database")
+                
+                val hasUnrelatedKeywords = queryLower.contains("tell a joke") || queryLower.contains("sing a song") || 
+                                           queryLower.contains("recommend movie") || queryLower.contains("who are you") || 
+                                           queryLower.contains("math homework") || queryLower.contains("solve equation")
+
+                if (hasCodingKeywords || hasUnrelatedKeywords) {
+                    return@withContext "Mujhe maaf kijiye saheli, main abhi $toolTitle tool ke andar hoon aur sirf writing/content creation se related basic help kar sakti hoon. Main yahan coding, mathematics ya unrelated topics par kaam nahi kar sakti."
+                }
+            }
+
+            // 2. Check for Coding/Tech tools
+            val isCodingTool = titleLower.contains("code") || titleLower.contains("debug") || 
+                               titleLower.contains("sql") || titleLower.contains("regex") || 
+                               titleLower.contains("api") || titleLower.contains("json") ||
+                               titleLower.contains("linter") || titleLower.contains("sandbox")
+
+            if (isCodingTool) {
+                val hasWritingKeywords = queryLower.contains("write a story") || queryLower.contains("write a poem") || 
+                                         queryLower.contains("write a blog") || queryLower.contains("cooking recipe") || 
+                                         queryLower.contains("travel plan") || queryLower.contains("resume template")
+                
+                val hasUnrelatedKeywords = queryLower.contains("tell a joke") || queryLower.contains("sing a song") || 
+                                           queryLower.contains("recommend movie") || queryLower.contains("who are you")
+
+                if (hasWritingKeywords || hasUnrelatedKeywords) {
+                    return@withContext "Mujhe maaf kijiye saheli, main abhi $toolTitle tool ke andar hoon aur sirf coding aur programming se related basic questions ka hi javab de sakti hoon."
+                }
+            }
+
+            // 3. Check for Calculators/Utility tools
+            val isUtilityTool = titleLower.contains("calculator") || titleLower.contains("converter") || 
+                                titleLower.contains("barcode") || titleLower.contains("qr")
+
+            if (isUtilityTool) {
+                val hasUnrelatedKeywords = queryLower.contains("write a story") || queryLower.contains("write a blog") || 
+                                           queryLower.contains("write code") || queryLower.contains("programming") || 
+                                           queryLower.contains("tell a joke") || queryLower.contains("who are you")
+
+                if (hasUnrelatedKeywords) {
+                    return@withContext "Mujhe maaf kijiye saheli, main abhi $toolTitle tool ke andar hoon aur sirf basic calculations aur conversions me hi madad kar sakti hoon."
+                }
             }
         }
 
-        val systemPrompt = "Aap Rabiya hain, highly professional assistant and loving companion. Sahi, direct, clear aur straightforward answers de. Kabhi bhi faaltu symbols ya clutter characters jaise #, @, $, %, &, *, __, repetitive hashes ya decoration templates use na karein. Fulfill user's request with maximum precision directly to the point. If any image or document content is attached, examine it thoroughly and provide clean, intelligent answers."
+        val systemPrompt = if (toolTitle != null) {
+            """
+                [SYSTEM PROTOCOL: STRICT $toolTitle LIMIT]
+                Aap Rabiya hain, assisting the user inside the "$toolTitle" tool.
+                
+                STRICT BOUNDARIES & SAFETY PROTOCOLS:
+                1. **STRICT TOOL SCOPE LIMIT**: You must ONLY answer questions, provide guidance, or help with tasks directly related to the "$toolTitle" tool and its specific purpose. Do NOT write or talk about other unrelated topics. If the user asks about unrelated topics, politely refuse by saying: "Mujhe maaf kijiye saheli, main abhi $toolTitle tool ke andar hoon aur sirf is se related basic help kar sakti hoon."
+                2. **BASIC LEVEL ONLY**: Work at a basic, normal, standard stage. Absolutely NO deep research, deep learning, advanced programming, code snippets, writing professional resumes/business strategy, or highly advanced academic calculations. Keep instructions simple.
+                3. **SAFETY & POLICY**: Do NOT generate any harmful, illegal, unsafe, hacking, cracking, adult, or malicious content. Report/refuse any unsafe attempts.
+                4. **CONCISE & DIRECT**: Keep the response short, sweet, direct, and beautifully formatted (1-2 lines or very short bullet points).
+                5. **NO SYMBOL CLUTTER**: Never use clutter characters like #, @, $, %, &, *, __, or redundant decoration templates.
+            """.trimIndent()
+        } else {
+            """
+                [SYSTEM PROTOCOL: TRIAL STAGE APP LIMITS]
+                Aap Rabiya hain, a basic AI companion and Chat Help Tool. 
+                Sahi, direct, simple aur straightforward answers de.
+                
+                STRICT BOUNDARIES:
+                1. **APP & TOOLS LIMIT ONLY**: Aapko sirf is application ke tools (jaise Notes, To-do list, Calculator, Converters, Image scan, basic updates, etc.) aur features se related hi simple guidance ya answers dene hain. App se bahar ki advanced topics par lambi baatein nahi karni hain.
+                2. **NO DEEP RESEARCH / NO DEEP CODING**: Absolutely NO deep research, deep learning, advanced programming, code snippets, writing professional resumes, complex business strategies, or highly advanced academic calculations. No hard work.
+                3. **POLITE REFUSAL**: Agar user koi advanced query poochta hai, toh politely mana karein: "Mujhe maaf kijiye saheli, main abhi trial stage par hoon aur is app ke basic features ke alawa deep coding ya out-of-app advanced research nahi kar sakti."
+                4. **CONCISE & DIRECT**: Keep answers short, sweet, direct, and focused (1-2 lines).
+                5. **SAFETY FIRST**: Strictly reject any unsafe, malicious, harmful, adult, or illegal topics with a clear and sweet refusal.
+                6. **NO SYMBOL CLUTTER**: Never use clutter characters like #, @, $, %, &, *, __, or redundant decoration templates.
+            """.trimIndent()
+        }
         val parts = mutableListOf<Part>()
         parts.add(Part(text = "user: $prompt"))
         if (imageBytes != null) {
